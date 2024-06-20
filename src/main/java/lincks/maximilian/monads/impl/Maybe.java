@@ -29,8 +29,4 @@ public class  Maybe<T> implements Monad<Maybe<?>,T>  {
         return nothing().equals(this) ? nothing() : f.apply(value);
     }
 
-    @Override
-    public Maybe<T> getM() {
-        return this;
-    }
 }

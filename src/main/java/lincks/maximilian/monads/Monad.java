@@ -15,7 +15,7 @@ public interface Monad<M extends Monad<M, ?>,T> {
         return this.bind(f.andThen(pure(this.getClass())));
     }
 
-    default <M2 extends M> M2 getM() {
-        return (M2) this;
+    default M getM() {
+        return (M) this;
     }
 }

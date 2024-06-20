@@ -13,4 +13,5 @@ class MonadPureTest {
         Maybe<Integer> s = pure(1, Maybe.class);
         assertEquals(1, s.get());
     }
+
 }

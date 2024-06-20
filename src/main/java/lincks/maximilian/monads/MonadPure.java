@@ -31,4 +31,5 @@ public final class MonadPure {
     private static <M extends Monad<M,T>, T> Optional<Constructor<?>> getConstructor(Class<M> clazz){
         return Arrays.stream(clazz.getConstructors()).filter(c -> c.getDeclaredAnnotation(MonadConstructor.class) != null).findFirst();
     }
+
 }
