@@ -1,15 +1,21 @@
 package lincks.maximilian.monads;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.function.Function;
 
 import static lincks.maximilian.monads.MonadPure.pure;
 
 
-public interface Monad<M extends Monad<M, T>,T> {
+public interface Monad<M extends Monad<M, ?>,T> {
 
-    <M2 extends Monad<M2,R>, R> M2  bind(Function<T,M2> f);
+    <R> Monad<M,R> bind(Function<T,Monad<M,R>> f);
 
-    default <M2 extends Monad<M2,R>, R> M2 map(Function<T,R> f) {
-        return (M2) this.bind(f.andThen(pure(this.getClass())));
+    default <R> Monad<M,R> map(Function<T,R> f) {
+        return this.bind(f.andThen(pure(this.getClass())));
+    }
+
+    default <M2 extends M> M2 getM() {
+        return (M2) this;
     }
 }
