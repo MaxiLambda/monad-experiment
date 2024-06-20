@@ -15,7 +15,6 @@ public class  Maybe<T> implements Monad<Maybe<?>,T>  {
         this.value = value;
     }
 
-
     private <R> Maybe<R> nothing() {
         return (Maybe<R>) nothing;
     }
@@ -29,4 +28,7 @@ public class  Maybe<T> implements Monad<Maybe<?>,T>  {
         return nothing().equals(this) ? nothing() : f.apply(value);
     }
 
+    public static <T> Maybe<T> unwrap(Monad<Maybe<?>, T> m) {
+        return (Maybe<T>) m;
+    }
 }

@@ -4,7 +4,7 @@ import lincks.maximilian.monads.impl.Maybe;
 import org.junit.jupiter.api.Test;
 
 import static lincks.maximilian.monads.MonadControl.join;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class MonadControlTest {
 

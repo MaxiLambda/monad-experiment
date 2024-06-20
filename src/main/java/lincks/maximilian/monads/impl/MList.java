@@ -27,10 +27,14 @@ public class MList<T> implements Monad<MList<?>,T> {
 
         List<R> r = list.stream()
                 .map(f)
-                .map(mlist -> (MList<R>) mlist.getM())
+                .map(MList::unwrap)
                 .flatMap(mlist -> mlist.list.stream())
                 .toList();
 
         return new MList<>(r);
+    }
+
+    public static <T> MList<T> unwrap(Monad<MList<?>, T> m) {
+        return (MList<T>) m;
     }
 }

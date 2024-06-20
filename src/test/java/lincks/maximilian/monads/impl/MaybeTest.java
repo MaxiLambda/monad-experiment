@@ -1,21 +1,17 @@
 package lincks.maximilian.monads.impl;
 
-import lincks.maximilian.monads.Monad;
 import org.junit.jupiter.api.Test;
 
-import java.util.Locale;
-
-import static lincks.maximilian.monads.MonadPure.pure;
-import static org.junit.jupiter.api.Assertions.*;
+import static lincks.maximilian.monads.impl.Maybe.unwrap;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class MaybeTest {
 
     @Test
     void testBind() {
-        Maybe<Integer> s = (Maybe<Integer>) new Maybe<>(1)
+        Maybe<Integer> s = unwrap(new Maybe<>(1)
                 .bind(i -> new Maybe<>(String.valueOf(i)))
-                .bind(i -> new Maybe<>(Integer.valueOf(i)))
-                .getM();
+                .bind(i -> new Maybe<>(Integer.valueOf(i))));
 
         assertEquals(s.get(),1);
     }

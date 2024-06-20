@@ -1,8 +1,7 @@
 package lincks.maximilian.monads;
 
 public class MonadControl {
-    public static  <MM extends Monad<MonType, M>,M extends Monad<MonType, T>,MonType extends Monad<MonType, ?>, T> M join(MM outer){
-        return (M) outer.bind(m -> m);
+    public static <Outer extends Monad<M, Inner>, Inner extends Monad<M, T>, M extends Monad<M, ?>, T> Inner join(Outer outer) {
+        return (Inner) outer.bind(m -> m);
     }
-
 }
