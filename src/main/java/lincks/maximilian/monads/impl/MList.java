@@ -2,14 +2,16 @@ package lincks.maximilian.monads.impl;
 
 import lincks.maximilian.monads.Monad;
 import lincks.maximilian.monads.MonadConstructor;
+import lombok.experimental.Delegate;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 
-public class MList<T> implements Monad<MList<?>,T> {
+public class MList<T> implements Monad<MList<?>,T>, List<T>{
 
+    @Delegate
     private final ArrayList<T> list;
 
     @MonadConstructor
