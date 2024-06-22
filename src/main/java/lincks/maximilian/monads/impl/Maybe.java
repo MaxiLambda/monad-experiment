@@ -8,14 +8,14 @@ import java.util.function.Function;
 public class  Maybe<T> implements Monad<Maybe<?>,T>  {
 
     private final T value;
-    public static final Maybe<?> nothing = new Maybe<>(null);
+    private static final Maybe<?> nothing = new Maybe<>(null);
 
     @MonadConstructor
     public Maybe(T value) {
         this.value = value;
     }
 
-    private <R> Maybe<R> nothing() {
+    public static <R> Maybe<R> nothing() {
         return (Maybe<R>) nothing;
     }
 
