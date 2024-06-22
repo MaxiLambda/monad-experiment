@@ -5,10 +5,10 @@ import lincks.maximilian.monads.MonadConstructor;
 
 import java.util.function.Function;
 
-public class  Maybe<T> implements Monad<Maybe<?>,T>  {
+public class Maybe<T> implements Monad<Maybe<?>, T> {
 
+    private static final Maybe<Void> nothing = new Maybe<>(null);
     private final T value;
-    private static final Maybe<?> nothing = new Maybe<>(null);
 
     @MonadConstructor
     public Maybe(T value) {
@@ -19,6 +19,10 @@ public class  Maybe<T> implements Monad<Maybe<?>,T>  {
         return (Maybe<R>) nothing;
     }
 
+    public static <T> Maybe<T> unwrap(Monad<Maybe<?>, T> m) {
+        return (Maybe<T>) m;
+    }
+
     public T get() {
         return value;
     }
@@ -26,9 +30,5 @@ public class  Maybe<T> implements Monad<Maybe<?>,T>  {
     @Override
     public <R> Monad<Maybe<?>, R> bind(Function<T, Monad<Maybe<?>, R>> f) {
         return nothing().equals(this) ? nothing() : f.apply(value);
-    }
-
-    public static <T> Maybe<T> unwrap(Monad<Maybe<?>, T> m) {
-        return (Maybe<T>) m;
     }
 }

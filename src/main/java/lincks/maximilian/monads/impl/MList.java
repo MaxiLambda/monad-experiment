@@ -9,7 +9,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 
-public class MList<T> implements Monad<MList<?>,T>, List<T>{
+public class MList<T> implements Monad<MList<?>, T>, List<T> {
 
     @Delegate
     private final ArrayList<T> list;
@@ -24,6 +24,10 @@ public class MList<T> implements Monad<MList<?>,T>, List<T>{
         list = new ArrayList<>(collection);
     }
 
+    public static <T> MList<T> unwrap(Monad<MList<?>, T> m) {
+        return (MList<T>) m;
+    }
+
     @Override
     public <R> Monad<MList<?>, R> bind(Function<T, Monad<MList<?>, R>> f) {
 
@@ -34,9 +38,5 @@ public class MList<T> implements Monad<MList<?>,T>, List<T>{
                 .toList();
 
         return new MList<>(r);
-    }
-
-    public static <T> MList<T> unwrap(Monad<MList<?>, T> m) {
-        return (MList<T>) m;
     }
 }

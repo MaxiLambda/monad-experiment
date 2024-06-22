@@ -23,17 +23,6 @@ public class MParser<S, T> implements Monad<MParser<S, ?>, T> {
         this.parse = (input) -> List.of(new ParseResult<>(value, input));
     }
 
-    @Override
-    public <R> Monad<MParser<S, ?>, R> bind(Function<T, Monad<MParser<S, ?>, R>> f) {
-        return new MParser<>(input ->
-                parse(input).stream()
-                        .map(result ->
-                                unwrap(f.apply(result.value))
-                                        .parse(result.remainingTokens))
-                        .flatMap(List::stream)
-                        .toList());
-    }
-
     public static <S, T> MParser<S, T> unwrap(Monad<MParser<S, ?>, T> m) {
         return (MParser<S, T>) m;
     }
@@ -52,6 +41,17 @@ public class MParser<S, T> implements Monad<MParser<S, ?>, T> {
 
     public static <S> MParser<S, Void> empty() {
         return new MParser<>(null);
+    }
+
+    @Override
+    public <R> Monad<MParser<S, ?>, R> bind(Function<T, Monad<MParser<S, ?>, R>> f) {
+        return new MParser<>(input ->
+                parse(input).stream()
+                        .map(result ->
+                                unwrap(f.apply(result.value))
+                                        .parse(result.remainingTokens))
+                        .flatMap(List::stream)
+                        .toList());
     }
 
     public List<ParseResult<S, T>> parse(List<S> tokens) {
@@ -93,7 +93,7 @@ public class MParser<S, T> implements Monad<MParser<S, ?>, T> {
     /**
      * Applies the current parser as often as possible
      *
-     * @return
+     * @return a parser appling the current parse as often as possible but at least once.
      */
     public MParser<S, List<T>> many() {
         return unwrap(bind(x -> unwrap(many().bind(xs -> {
@@ -104,17 +104,30 @@ public class MParser<S, T> implements Monad<MParser<S, ?>, T> {
         })).either(new MParser<>(List.of(x)))));
     }
 
+    /**
+     * Creates a Parser which applies the current parser and then, if possible the other parser.
+     * Can be used to optionally add elements to a parsed list etc...
+     *
+     * @param combine if other can parse successfully then use this function to merge its value
+     *                with the current parsing result.
+     * @param other   the parser to apply if possible.
+     * @param <A>     the type wrapped by the other parser
+     * @return A parser which definitely parses the same as this parser but might parse using other afterward.
+     */
     public <A> MParser<S, T> maybe(BiFunction<T, A, T> combine, MParser<S, A> other) {
         return new MParser<>((List<S> input) ->
                 parse(input).stream().flatMap(outer -> {
                             List<ParseResult<S, A>> results = other.parse(outer.remainingTokens);
                             return results.isEmpty() ? Stream.of(outer) : results.stream().map(inner ->
-                                    new ParseResult<S, T>(combine.apply(outer.value, inner.value), inner.remainingTokens));
+                                    new ParseResult<>(combine.apply(outer.value, inner.value), inner.remainingTokens));
                         }
                 ).toList()
         );
     }
 
+    /**
+     * @return a new version of the current parser. If the parsing fails the result is {@link Maybe#nothing()}.
+     */
     public MParser<S, Maybe<T>> maybeMParser() {
         return new MParser<>(input -> {
             List<ParseResult<S, Maybe<T>>> results = unwrap(map(Maybe::new)).parse(input);

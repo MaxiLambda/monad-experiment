@@ -23,7 +23,7 @@ import static lincks.maximilian.monads.MonadPure.pure;
  * @param <M> the monadic Type.
  * @param <T> the Type wrapped by the monad.
  */
-public interface Monad<M extends Monad<M, ?>,T> {
+public interface Monad<M extends Monad<M, ?>, T> {
 
     /**
      * Creates a new Monad from a value wrapped in another monad.
@@ -32,14 +32,14 @@ public interface Monad<M extends Monad<M, ?>,T> {
      * @param <R> the type of the new Monad.
      * @return a new Monad wrapping a R value.
      */
-    <R> Monad<M,R> bind(Function<T,Monad<M,R>> f);
+    <R> Monad<M, R> bind(Function<T, Monad<M, R>> f);
 
     /**
-     * @param f mapping function.
+     * @param f   mapping function.
      * @param <R> the type fo which is mapped.
      * @return a new Monad with type R
      */
-    default <R> Monad<M,R> map(Function<T,R> f) {
+    default <R> Monad<M, R> map(Function<T, R> f) {
         //this works by calling f on the wrapped value supplied by bind and then lifting the result of f using pure
         return this.bind(f.andThen(pure(this.getClass())));
     }
