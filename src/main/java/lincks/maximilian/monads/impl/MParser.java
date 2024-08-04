@@ -44,7 +44,7 @@ public class MParser<S, T> implements Monad<MParser<S, ?>, T> {
     }
 
     @Override
-    public <R> Monad<MParser<S, ?>, R> bind(Function<T, Monad<MParser<S, ?>, R>> f) {
+    public <R> MParser<S, R> bind(Function<T, Monad<MParser<S, ?>, R>> f) {
         return new MParser<>(input ->
                 parse(input).stream()
                         .map(result ->
@@ -54,12 +54,17 @@ public class MParser<S, T> implements Monad<MParser<S, ?>, T> {
                         .toList());
     }
 
+    @Override
+    public <R> MParser<S, R> map(Function<T, R> f) {
+        return unwrap(Monad.super.map(f));
+    }
+
     public List<ParseResult<S, T>> parse(List<S> tokens) {
         return parse.apply(tokens);
     }
 
     public <R, A> MParser<S, R> then(BiFunction<T, A, R> combine, Monad<MParser<S, ?>, A> other) {
-        return unwrap(bind(i -> other.bind(j -> new MParser<>(combine.apply(i, j)))));
+        return bind(i -> other.bind(j -> new MParser<>(combine.apply(i, j))));
     }
 
     /**
@@ -96,12 +101,12 @@ public class MParser<S, T> implements Monad<MParser<S, ?>, T> {
      * @return a parser appling the current parse as often as possible but at least once.
      */
     public MParser<S, List<T>> many() {
-        return unwrap(bind(x -> unwrap(many().bind(xs -> {
+        return bind(x -> many().bind(xs -> {
             ArrayList<T> results = new ArrayList<>();
             results.add(x);
             results.addAll(xs);
             return new MParser<S, List<T>>(results);
-        })).either(new MParser<>(List.of(x)))));
+        }).either(new MParser<>(List.of(x))));
     }
 
     /**
@@ -130,7 +135,7 @@ public class MParser<S, T> implements Monad<MParser<S, ?>, T> {
      */
     public MParser<S, Maybe<T>> maybeMParser() {
         return new MParser<>(input -> {
-            List<ParseResult<S, Maybe<T>>> results = unwrap(map(Maybe::new)).parse(input);
+            List<ParseResult<S, Maybe<T>>> results = map(Maybe::new).parse(input);
             return results.isEmpty() ? List.of(new ParseResult<>(Maybe.nothing(), input)) : results;
         });
     }

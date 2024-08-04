@@ -28,7 +28,12 @@ public class Maybe<T> implements Monad<Maybe<?>, T> {
     }
 
     @Override
-    public <R> Monad<Maybe<?>, R> bind(Function<T, Monad<Maybe<?>, R>> f) {
-        return nothing().equals(this) ? nothing() : f.apply(value);
+    public <R> Maybe<R> bind(Function<T, Monad<Maybe<?>, R>> f) {
+        return nothing().equals(this) ? nothing() : f.andThen(Maybe::unwrap).apply(value);
+    }
+
+    @Override
+    public <R> Maybe<R> map(Function<T, R> f) {
+        return unwrap(Monad.super.map(f));
     }
 }

@@ -29,7 +29,7 @@ public class MList<T> implements Monad<MList<?>, T>, List<T> {
     }
 
     @Override
-    public <R> Monad<MList<?>, R> bind(Function<T, Monad<MList<?>, R>> f) {
+    public <R> MList<R> bind(Function<T, Monad<MList<?>, R>> f) {
 
         List<R> r = list.stream()
                 .map(f)
@@ -38,5 +38,10 @@ public class MList<T> implements Monad<MList<?>, T>, List<T> {
                 .toList();
 
         return new MList<>(r);
+    }
+
+    @Override
+    public <R> MList<R> map(Function<T, R> f) {
+        return unwrap(Monad.super.map(f));
     }
 }

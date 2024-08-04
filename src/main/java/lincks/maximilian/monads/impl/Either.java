@@ -14,11 +14,16 @@ public sealed interface Either<F, T> extends Monad<Either<F, ?>, T> {
     }
 
     @Override
-    default <R> Monad<Either<F, ?>, R> bind(Function<T, Monad<Either<F, ?>, R>> f) {
+    default <R> Either<F, R> bind(Function<T, Monad<Either<F, ?>, R>> f) {
         return switch (this) {
             case Left(F value) -> new Left<>(value);
-            case Right(T value) -> f.apply(value);
+            case Right(T value) -> f.andThen(Either::unwrap).apply(value);
         };
+    }
+
+    @Override
+    default <R> Either<F, R> map(Function<T, R> f) {
+        return unwrap(Monad.super.map(f));
     }
 
     record Right<F, T>(T value) implements Either<F, T> {
