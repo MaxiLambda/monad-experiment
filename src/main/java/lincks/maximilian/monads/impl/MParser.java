@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 public class MParser<S, T> implements Monad<MParser<S, ?>, T> {
@@ -57,6 +58,11 @@ public class MParser<S, T> implements Monad<MParser<S, ?>, T> {
     @Override
     public <R> MParser<S, R> map(Function<T, R> f) {
         return unwrap(Monad.super.map(f));
+    }
+
+    @Override
+    public <R> MParser<S, R> then(Supplier<Monad<MParser<S, ?>, R>> f) {
+        return unwrap(Monad.super.then(f));
     }
 
     public List<ParseResult<S, T>> parse(List<S> tokens) {

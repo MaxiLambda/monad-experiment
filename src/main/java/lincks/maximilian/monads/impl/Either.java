@@ -5,6 +5,7 @@ import lincks.maximilian.monads.MonadConstructor;
 import lincks.maximilian.monads.MonadConstructorDelegate;
 
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 @MonadConstructorDelegate(clazz = Either.Right.class)
 public sealed interface Either<F, T> extends Monad<Either<F, ?>, T> {
@@ -24,6 +25,11 @@ public sealed interface Either<F, T> extends Monad<Either<F, ?>, T> {
     @Override
     default <R> Either<F, R> map(Function<T, R> f) {
         return unwrap(Monad.super.map(f));
+    }
+
+    @Override
+    default <R> Either<F, R> then(Supplier<Monad<Either<F, ?>, R>> f) {
+        return unwrap(Monad.super.then(f));
     }
 
     record Right<F, T>(T value) implements Either<F, T> {

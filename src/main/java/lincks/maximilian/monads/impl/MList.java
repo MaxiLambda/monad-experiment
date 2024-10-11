@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class MList<T> implements Monad<MList<?>, T>, List<T> {
 
@@ -43,5 +44,10 @@ public class MList<T> implements Monad<MList<?>, T>, List<T> {
     @Override
     public <R> MList<R> map(Function<T, R> f) {
         return unwrap(Monad.super.map(f));
+    }
+
+    @Override
+    public <R> MList<R> then(Supplier<Monad<MList<?>, R>> f) {
+        return unwrap(Monad.super.then(f));
     }
 }

@@ -1,6 +1,7 @@
 package lincks.maximilian.monads;
 
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static lincks.maximilian.monads.MonadPure.pure;
 
@@ -42,6 +43,20 @@ public interface Monad<M extends Monad<M, ?>, T> {
     default <R> Monad<M, R> map(Function<T, R> f) {
         //this works by calling f on the wrapped value supplied by bind and then lifting the result of f using pure
         return this.bind(f.andThen(pure(this.getClass())));
+    }
+
+    /**
+     * Returns the result f by calling bind while ignoring the current value
+     * <p>
+     * For example when called with something like an Optional, the empty state is propagated,
+     * otherwise the result of f is the new value.
+     *
+     * @param f   function to supply next value
+     * @param <R> the type of the new monad.
+     * @return new monad with type t.
+     */
+    default <R> Monad<M, R> then(Supplier<Monad<M, R>> f) {
+        return bind((T ignore) -> f.get());
     }
 }
 

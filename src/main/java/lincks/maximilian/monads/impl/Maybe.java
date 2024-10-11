@@ -4,6 +4,7 @@ import lincks.maximilian.monads.Monad;
 import lincks.maximilian.monads.MonadConstructor;
 
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class Maybe<T> implements Monad<Maybe<?>, T> {
 
@@ -35,5 +36,10 @@ public class Maybe<T> implements Monad<Maybe<?>, T> {
     @Override
     public <R> Maybe<R> map(Function<T, R> f) {
         return unwrap(Monad.super.map(f));
+    }
+
+    @Override
+    public <R> Maybe<R> then(Supplier<Monad<Maybe<?>, R>> f) {
+        return unwrap(Monad.super.then(f));
     }
 }
