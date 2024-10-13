@@ -1,5 +1,7 @@
 package lincks.maximilian.impl;
 
+import lincks.maximilian.monadplus.MZero;
+import lincks.maximilian.monadplus.MonadPlus;
 import lincks.maximilian.monads.Monad;
 import lincks.maximilian.applicative.ApplicativeConstructor;
 import lombok.EqualsAndHashCode;
@@ -7,6 +9,7 @@ import lombok.ToString;
 import lombok.experimental.Delegate;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
@@ -14,19 +17,26 @@ import java.util.function.Supplier;
 
 @ToString
 @EqualsAndHashCode
-public class MList<T> implements Monad<MList<?>, T>, List<T> {
+public class MList<T> implements MonadPlus<MList<?>, T> {
 
-    @Delegate
-    private final ArrayList<T> list;
+    private final List<T> list;
 
-    @ApplicativeConstructor
-    public MList(T value) {
-        list = new ArrayList<>();
-        list.add(value);
+    public MList() {
+        list = List.of();
     }
 
-    public MList(Collection<T> collection) {
-        list = new ArrayList<>(collection);
+    @MZero
+    public static <T> MList<T> empty() {
+        return new MList<>();
+    }
+
+    @ApplicativeConstructor
+    public MList(T... args) {
+        list = Arrays.stream(args).toList();
+    }
+
+    private MList(List<T> list) {
+        this.list = List.copyOf(list);
     }
 
     public static <T> MList<T> unwrap(Monad<MList<?>, T> m) {
@@ -42,16 +52,29 @@ public class MList<T> implements Monad<MList<?>, T>, List<T> {
                 .flatMap(mlist -> mlist.list.stream())
                 .toList();
 
-        return new MList<>(r);
+        return fromList(r);
     }
 
     @Override
     public <R> MList<R> map(Function<T, R> f) {
-        return unwrap(Monad.super.map(f));
+        return unwrap(MonadPlus.super.map(f));
     }
 
     @Override
     public <R> MList<R> then(Supplier<Monad<MList<?>, R>> f) {
-        return unwrap(Monad.super.then(f));
+        return unwrap(MonadPlus.super.then(f));
+    }
+
+    @Override
+    public MList<T> mplus(MonadPlus<MList<?>, T> other) {
+        return new MList<>();
+    }
+
+    public static <T> MList<T> fromList(List<T> list) {
+        return new MList<>(list);
+    }
+
+    public List<T> toList() {
+        return List.copyOf(list);
     }
 }

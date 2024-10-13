@@ -52,7 +52,7 @@ public interface Monad<M extends Monad<M, ?>, T> extends Applicative<M, T> {
     //added only to obtain a monad from a Monad
     @Override
     default <R> Monad<M, R> sequence(Applicative<M, Function<T, R>> f) {
-        return bind(val -> fromApplicative(f.map(func -> func.apply(val))));
+        return  bind(val -> (Monad<M, R>) (f.map(func -> func.apply(val))));
     }
 
     //added only to obtain a monad from a Monad
@@ -73,18 +73,6 @@ public interface Monad<M extends Monad<M, ?>, T> extends Applicative<M, T> {
      */
     default <R> Monad<M, R> then(Supplier<Monad<M, R>> f) {
         return bind((T ignore) -> f.get());
-    }
-
-    /**
-     * Casts an Applicative of a monadic value to a Monad. This a Always safe, because M is always a Monad.
-     *
-     * @param applicative the Monad that is typed as an Applicative.
-     * @param <M>         the Monad type.
-     * @param <T>         the Type wrapped by the Monad.
-     * @return applicative but cast to its monadic form.
-     */
-    static <M extends Monad<M, ?>, T> Monad<M, T> fromApplicative(Applicative<M, T> applicative) {
-        return (Monad<M, T>) applicative;
     }
 }
 
