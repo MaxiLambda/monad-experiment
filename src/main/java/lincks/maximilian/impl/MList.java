@@ -2,6 +2,8 @@ package lincks.maximilian.impl;
 
 import lincks.maximilian.monads.Monad;
 import lincks.maximilian.applicative.ApplicativeConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import lombok.experimental.Delegate;
 
 import java.util.ArrayList;
@@ -10,6 +12,8 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+@ToString
+@EqualsAndHashCode
 public class MList<T> implements Monad<MList<?>, T>, List<T> {
 
     @Delegate
