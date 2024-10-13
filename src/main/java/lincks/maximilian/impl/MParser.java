@@ -1,7 +1,7 @@
 package lincks.maximilian.impl;
 
 import lincks.maximilian.monads.Monad;
-import lincks.maximilian.monads.MonadConstructor;
+import lincks.maximilian.applicative.ApplicativeConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +19,7 @@ public class MParser<S, T> implements Monad<MParser<S, ?>, T> {
         this.parse = parse;
     }
 
-    @MonadConstructor
+    @ApplicativeConstructor
     public MParser(T value) {
         this.parse = (input) -> List.of(new ParseResult<>(value, input));
     }

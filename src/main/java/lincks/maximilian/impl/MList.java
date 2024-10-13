@@ -1,7 +1,7 @@
 package lincks.maximilian.impl;
 
 import lincks.maximilian.monads.Monad;
-import lincks.maximilian.monads.MonadConstructor;
+import lincks.maximilian.applicative.ApplicativeConstructor;
 import lombok.experimental.Delegate;
 
 import java.util.ArrayList;
@@ -15,7 +15,7 @@ public class MList<T> implements Monad<MList<?>, T>, List<T> {
     @Delegate
     private final ArrayList<T> list;
 
-    @MonadConstructor
+    @ApplicativeConstructor
     public MList(T value) {
         list = new ArrayList<>();
         list.add(value);

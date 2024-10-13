@@ -1,4 +1,4 @@
-package lincks.maximilian.monads;
+package lincks.maximilian.applicative;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -8,10 +8,10 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
  * Annotate a Type implementing {@link <S,T> Monad<S,T>} with this method, if another class
- * implements the {@link MonadConstructor} method.
+ * implements the {@link ApplicativeConstructor} method.
  */
 @Retention(RUNTIME)
 @Target({ElementType.TYPE})
-public @interface MonadConstructorDelegate {
+public @interface ApplicativeConstructorDelegate {
     Class<?> clazz();
 }

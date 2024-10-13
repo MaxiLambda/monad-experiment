@@ -1,4 +1,7 @@
-package lincks.maximilian.monads;
+package lincks.maximilian.applicative;
+
+import lincks.maximilian.monads.Monad;
+import lincks.maximilian.monads.MonadPure;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -12,5 +15,5 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  */
 @Retention(RUNTIME)
 @Target({ElementType.CONSTRUCTOR})
-public @interface MonadConstructor {
+public @interface ApplicativeConstructor {
 }

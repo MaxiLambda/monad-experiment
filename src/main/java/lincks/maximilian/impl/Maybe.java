@@ -1,7 +1,7 @@
 package lincks.maximilian.impl;
 
 import lincks.maximilian.monads.Monad;
-import lincks.maximilian.monads.MonadConstructor;
+import lincks.maximilian.applicative.ApplicativeConstructor;
 
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -11,7 +11,7 @@ public class Maybe<T> implements Monad<Maybe<?>, T> {
     private static final Maybe<Void> nothing = new Maybe<>(null);
     private final T value;
 
-    @MonadConstructor
+    @ApplicativeConstructor
     public Maybe(T value) {
         this.value = value;
     }

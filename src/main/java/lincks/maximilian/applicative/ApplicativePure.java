@@ -1,7 +1,6 @@
-package lincks.maximilian.monads;
+package lincks.maximilian.applicative;
 
-import lincks.maximilian.applicative.ApplicativeConstructor;
-import lincks.maximilian.applicative.ApplicativeConstructorDelegate;
+import lincks.maximilian.monads.MonadPure;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -10,26 +9,26 @@ import java.util.Optional;
 import java.util.function.Function;
 
 /**
- * Helper Class for {@link Monad} to complete monadic definition.
+ * Helper Class for {@link Applicative} to complete monadic/applicative definition.
  */
-public final class MonadPure {
+public final class ApplicativePure {
 
-    private MonadPure() {
+    private ApplicativePure() {
     }
 
     /**
      * ONLY WORKS FOR CLASSES HAVING A CONSTRUCTOR WITH {@link ApplicativeConstructor}.
-     * Lifts a value to a Monadic value of a given class.
+     * Lifts a value to a Monadic/Applicative value of a given class.
      *
      * @param value the value to lift.
-     * @param clazz the monad to lift to.
-     * @param <M>   the type of the monad.
+     * @param clazz the monad/applicative to lift to.
+     * @param <A>   the type of the monad/applicative.
      * @param <T>   the type of the value to lift.
-     * @return a new Monad M wrapping the value of type T.
+     * @return a new Monad/Applicative A wrapping the value of type T.
      */
-    public static <M extends Monad<M, T>, T> M pure(T value, Class<M> clazz) {
+    public static <A extends Applicative<A, T>, T> A pure(T value, Class<A> clazz) {
         try {
-            return (M) getConstructor(clazz).get().newInstance(value);
+            return (A) getConstructor(clazz).get().newInstance(value);
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException(e);
         }
@@ -40,15 +39,15 @@ public final class MonadPure {
      * Wrapper around {@link MonadPure#pure(Object, Class)} to use in function composition
      *
      * @param clazz the monad to lift to.
-     * @param <M>   the type of the monad.
+     * @param <A>   the type of the monad.
      * @param <T>   the type of the value to lift.
      * @return a {@code Function<T, M>} lifting T to a Monad M wrapping T.
      */
-    public static <M extends Monad<M, T>, T> Function<T, M> pure(Class<M> clazz) {
+    public static <A extends Applicative<A, T>, T> Function<T, A> pure(Class<A> clazz) {
         return (T value) -> pure(value, clazz);
     }
 
-    private static <M extends Monad<M, T>, T> Optional<Constructor<?>> getConstructor(Class<M> clazz) {
+    private static <A extends Applicative<A, T>, T> Optional<Constructor<?>> getConstructor(Class<A> clazz) {
         Optional<Class<?>> definingClazz = Optional
                 .ofNullable(clazz.getDeclaredAnnotation(ApplicativeConstructorDelegate.class))
                 .map(ApplicativeConstructorDelegate::clazz);

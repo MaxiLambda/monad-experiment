@@ -1,5 +1,9 @@
 package lincks.maximilian.monads;
 
+import lincks.maximilian.applicative.Applicative;
+import lincks.maximilian.applicative.ApplicativeConstructor;
+
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -8,7 +12,7 @@ import static lincks.maximilian.monads.MonadPure.pure;
 
 /**
  * Java implementation of a Monad. Every Type implementing {@link Monad} MUST define
- * a one arg Constructor annotated with {@link MonadConstructor}.
+ * a one arg Constructor annotated with {@link ApplicativeConstructor}.
  * <p>
  * It is recommended that no Monad {@code MyMonad<T> implements Monad<MyMonad<?>,T>} implements
  * this interface with a Type M that is not itself.
@@ -24,7 +28,7 @@ import static lincks.maximilian.monads.MonadPure.pure;
  * @param <M> the monadic Type.
  * @param <T> the Type wrapped by the monad.
  */
-public interface Monad<M extends Monad<M, ?>, T> {
+public interface Monad<M extends Monad<M, ?>, T> extends Applicative<M, T> {
 
     /**
      * Creates a new Monad from a value wrapped in another monad.
@@ -45,6 +49,18 @@ public interface Monad<M extends Monad<M, ?>, T> {
         return this.bind(f.andThen(pure(this.getClass())));
     }
 
+    //added only to obtain a monad from a Monad
+    @Override
+    default <R> Monad<M, R> sequence(Applicative<M, Function<T, R>> f) {
+        return bind(val -> fromApplicative(f.map(func -> func.apply(val))));
+    }
+
+    //added only to obtain a monad from a Monad
+    @Override
+    default <T2, R> Monad<M, R> liftA2(BiFunction<T, T2, R> f, Applicative<M, T2> other) {
+        return (Monad<M, R>) Applicative.super.liftA2(f, other);
+    }
+
     /**
      * Returns the result f by calling bind while ignoring the current value
      * <p>
@@ -57,6 +73,18 @@ public interface Monad<M extends Monad<M, ?>, T> {
      */
     default <R> Monad<M, R> then(Supplier<Monad<M, R>> f) {
         return bind((T ignore) -> f.get());
+    }
+
+    /**
+     * Casts an Applicative of a monadic value to a Monad. This a Always safe, because M is always a Monad.
+     *
+     * @param applicative the Monad that is typed as an Applicative.
+     * @param <M>         the Monad type.
+     * @param <T>         the Type wrapped by the Monad.
+     * @return applicative but cast to its monadic form.
+     */
+    static <M extends Monad<M, ?>, T> Monad<M, T> fromApplicative(Applicative<M, T> applicative) {
+        return (Monad<M, T>) applicative;
     }
 }
 
