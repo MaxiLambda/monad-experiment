@@ -1,8 +1,8 @@
-package lincks.maximilian.monads.impl;
+package lincks.maximilian.impl;
 
 import org.junit.jupiter.api.Test;
 
-import static lincks.maximilian.monads.impl.Either.unwrap;
+import static lincks.maximilian.impl.Either.unwrap;
 import static org.junit.jupiter.api.Assertions.*;
 
 class EitherTest {

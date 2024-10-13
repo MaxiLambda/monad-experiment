@@ -1,4 +1,4 @@
-package lincks.maximilian.monads.impl;
+package lincks.maximilian.impl;
 
 import lincks.maximilian.monads.Monad;
 import lincks.maximilian.monads.MonadConstructor;

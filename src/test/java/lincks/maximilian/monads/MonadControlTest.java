@@ -1,6 +1,6 @@
 package lincks.maximilian.monads;
 
-import lincks.maximilian.monads.impl.Maybe;
+import lincks.maximilian.impl.Maybe;
 import org.junit.jupiter.api.Test;
 
 import static lincks.maximilian.monads.MonadControl.join;
