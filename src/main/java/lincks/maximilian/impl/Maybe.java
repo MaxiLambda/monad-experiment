@@ -1,12 +1,17 @@
 package lincks.maximilian.impl;
 
+import lincks.maximilian.monadplus.MonadPlus;
 import lincks.maximilian.monads.Monad;
 import lincks.maximilian.applicative.ApplicativeConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public class Maybe<T> implements Monad<Maybe<?>, T> {
+@ToString
+@EqualsAndHashCode
+public class Maybe<T> implements MonadPlus<Maybe<?>, T> {
 
     private static final Maybe<Void> nothing = new Maybe<>(null);
     private final T value;
@@ -35,11 +40,16 @@ public class Maybe<T> implements Monad<Maybe<?>, T> {
 
     @Override
     public <R> Maybe<R> map(Function<T, R> f) {
-        return unwrap(Monad.super.map(f));
+        return unwrap(MonadPlus.super.map(f));
     }
 
     @Override
     public <R> Maybe<R> then(Supplier<Monad<Maybe<?>, R>> f) {
-        return unwrap(Monad.super.then(f));
+        return unwrap(MonadPlus.super.then(f));
+    }
+
+    @Override
+    public Maybe<T> mplus(MonadPlus<Maybe<?>, T> other) {
+        return nothing().equals(this) ? nothing() : unwrap(other);
     }
 }
