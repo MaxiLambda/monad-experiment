@@ -25,6 +25,15 @@ public abstract class ApplicativeFunction<T, R, A extends Applicative<A, ?>> imp
     @Getter
     private final Class<?> applicativeType;
 
+    public static <T, R, A extends Applicative<A, ?>> ApplicativeFunction<T,R,A> of(Function<T, Applicative<A, R>> function, Class<?> clazz) {
+        return new ApplicativeFunction<>(function, clazz){};
+    }
+
+    private ApplicativeFunction(Function<T, Applicative<A, R>> function, Class<?> clazz) {
+        this.function = function;
+        this.applicativeType = clazz;
+    }
+
     public ApplicativeFunction(Function<T, Applicative<A, R>> function) {
         this.function = function;
         Type superclass = getClass().getGenericSuperclass();

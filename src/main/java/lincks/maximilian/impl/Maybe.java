@@ -1,8 +1,10 @@
 package lincks.maximilian.impl;
 
+import lincks.maximilian.applicative.Applicative;
+import lincks.maximilian.applicative.ApplicativeConstructor;
 import lincks.maximilian.monadplus.MonadPlus;
 import lincks.maximilian.monads.Monad;
-import lincks.maximilian.applicative.ApplicativeConstructor;
+import lincks.maximilian.util.Bottom;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
@@ -25,7 +27,7 @@ public class Maybe<T> implements MonadPlus<Maybe<?>, T> {
         return (Maybe<R>) nothing;
     }
 
-    public static <T> Maybe<T> unwrap(Monad<Maybe<?>, T> m) {
+    public static <T> Maybe<T> unwrap(Bottom<Maybe<?>, T> m) {
         return (Maybe<T>) m;
     }
 
@@ -51,5 +53,10 @@ public class Maybe<T> implements MonadPlus<Maybe<?>, T> {
     @Override
     public Maybe<T> mplus(MonadPlus<Maybe<?>, T> other) {
         return nothing().equals(this) ? nothing() : unwrap(other);
+    }
+
+    @Override
+    public <R> Maybe<R> sequence(Applicative<Maybe<?>, Function<T, R>> f) {
+        return nothing().equals(this) ? nothing() : unwrap(f.map(func -> func.apply(value)));
     }
 }

@@ -3,7 +3,6 @@ package lincks.maximilian.monads;
 import lincks.maximilian.applicative.Applicative;
 import lincks.maximilian.applicative.ApplicativeConstructor;
 
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -47,18 +46,6 @@ public interface Monad<M extends Monad<M, ?>, T> extends Applicative<M, T> {
     default <R> Monad<M, R> map(Function<T, R> f) {
         //this works by calling f on the wrapped value supplied by bind and then lifting the result of f using pure
         return this.bind(f.andThen(pure(this.getClass())));
-    }
-
-    //added only to obtain a monad from a Monad
-    @Override
-    default <R> Monad<M, R> sequence(Applicative<M, Function<T, R>> f) {
-        return  bind(val -> (Monad<M, R>) (f.map(func -> func.apply(val))));
-    }
-
-    //added only to obtain a monad from a Monad
-    @Override
-    default <T2, R> Monad<M, R> liftA2(BiFunction<T, T2, R> f, Applicative<M, T2> other) {
-        return (Monad<M, R>) Applicative.super.liftA2(f, other);
     }
 
     /**

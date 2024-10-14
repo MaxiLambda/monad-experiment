@@ -1,7 +1,7 @@
 package lincks.maximilian.impl;
 
-import lincks.maximilian.monads.Monad;
 import lincks.maximilian.applicative.ApplicativeConstructor;
+import lincks.maximilian.monads.Monad;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,15 +1,13 @@
-package lincks.maximilian.monadplus;
+package lincks.maximilian.monadzero;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Optional;
 
-public final class MonadPlusZero {
-    private MonadPlusZero() {
-    }
+public interface MonadZero<M extends MonadZero<M, ?>, T> {
 
-    public static <M extends MonadPlus<M, T>, T> M zero(Class<M> clazz) {
+    static <M extends MonadZero<M, T>, T> M zero(Class<M> clazz) {
 
         Optional<Method> creator = Arrays.stream(clazz.getMethods())
                 .filter(method -> method.getDeclaredAnnotation(MZero.class) != null)

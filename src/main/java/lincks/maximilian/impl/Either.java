@@ -1,8 +1,9 @@
 package lincks.maximilian.impl;
 
-import lincks.maximilian.monads.Monad;
 import lincks.maximilian.applicative.ApplicativeConstructor;
 import lincks.maximilian.applicative.ApplicativeConstructorDelegate;
+import lincks.maximilian.monads.Monad;
+import lincks.maximilian.util.Bottom;
 
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -10,7 +11,7 @@ import java.util.function.Supplier;
 @ApplicativeConstructorDelegate(clazz = Either.Right.class)
 public sealed interface Either<F, T> extends Monad<Either<F, ?>, T> {
 
-    static <F, T> Either<F, T> unwrap(Monad<Either<F, ?>, T> m) {
+    static <F, T> Either<F, T> unwrap(Bottom<Either<F, ?>, T> m) {
         return (Either<F, T>) m;
     }
 

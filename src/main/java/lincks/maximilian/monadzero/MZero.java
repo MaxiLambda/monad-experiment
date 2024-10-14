@@ -1,4 +1,4 @@
-package lincks.maximilian.monadplus;
+package lincks.maximilian.monadzero;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

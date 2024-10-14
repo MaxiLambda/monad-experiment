@@ -10,9 +10,6 @@ import static lincks.maximilian.applicative.ApplicativePure.pure;
 
 public interface Applicative<A extends Applicative<A,?>,T> extends Functor<A,T> {
 
-    //overwrite the types from Functor
-    @Override
-    <R> Applicative<A, R> map(Function<T, R> f);
 
 
     default <R> Applicative<A,R> sequence(Applicative<A, Function<T,R>> f) {
@@ -21,7 +18,7 @@ public interface Applicative<A extends Applicative<A,?>,T> extends Functor<A,T> 
     }
 
     default <T2,R> Applicative<A,R> liftA2(BiFunction<T, T2,R> f, Applicative<A, T2> other) {
-       return other.sequence(map(F.curry(f)));
+       return other.sequence((Applicative<A, Function<T2,R>>) map(F.curry(f)));
     }
 
     default <R> Applicative<A,R> liftA(Function<T,R> f) {
