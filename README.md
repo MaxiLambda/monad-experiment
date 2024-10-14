@@ -109,7 +109,7 @@ The following classes are basically Monads:
 The benefit of unifying all Monads with a dedicated class, is the ability to write generic code.
 Of course this requires more than just the Monad interface. Take Haskell for example, there are multiple classes 
 describing the abilities of types.
-![esdsd](docs/558px-FunctorHierarchy.svg.png)
+![implemented_interfaces](docs/interfaces.png)
 If these Types are provided, more abstract functionalities can be provided.
 
 
