@@ -15,4 +15,11 @@ class MaybeTest {
 
         assertEquals(s.get(),1);
     }
+
+    @Test
+    void testNothing() {
+        assertEquals(Maybe.<Integer>nothing().map(i -> i +1), Maybe.nothing());
+
+        assertEquals(Maybe.<Integer>nothing().bind(i -> new Maybe<>(i +1)), Maybe.nothing());
+    }
 }
