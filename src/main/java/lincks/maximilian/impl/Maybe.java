@@ -23,6 +23,11 @@ public class Maybe<T> implements MonadPlus<Maybe<?>, T> {
         this.value = value;
     }
 
+    public boolean isNothing() {
+        //compare references
+        return nothing == this;
+    }
+
     public static <R> Maybe<R> nothing() {
         return (Maybe<R>) nothing;
     }
@@ -37,7 +42,7 @@ public class Maybe<T> implements MonadPlus<Maybe<?>, T> {
 
     @Override
     public <R> Maybe<R> bind(Function<T, Monad<Maybe<?>, R>> f) {
-        return nothing().equals(this) ? nothing() : f.andThen(Maybe::unwrap).apply(value);
+        return isNothing() ? nothing() : f.andThen(Maybe::unwrap).apply(value);
     }
 
     @Override
@@ -52,11 +57,11 @@ public class Maybe<T> implements MonadPlus<Maybe<?>, T> {
 
     @Override
     public Maybe<T> mplus(MonadPlus<Maybe<?>, T> other) {
-        return nothing().equals(this) ? nothing() : unwrap(other);
+        return isNothing() ? nothing() : unwrap(other);
     }
 
     @Override
     public <R> Maybe<R> sequence(Applicative<Maybe<?>, Function<T, R>> f) {
-        return nothing().equals(this) ? nothing() : unwrap(f.map(func -> func.apply(value)));
+        return isNothing() ? nothing() : unwrap(f.map(func -> func.apply(value)));
     }
 }
