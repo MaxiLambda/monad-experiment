@@ -5,6 +5,12 @@ import lincks.maximilian.monadplus.MonadPlus;
 
 import java.util.function.Supplier;
 
+/**
+ * Unifies {@link Alternative} with {@link MonadPlus}.
+ *
+ * @param <M>
+ * @param <T>
+ */
 public interface MonadPlusZero<M extends MonadPlusZero<M, ?>, T> extends MonadPlus<M, T>, Alternative<M, T> {
 
     @Override
