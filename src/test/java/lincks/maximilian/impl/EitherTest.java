@@ -19,7 +19,7 @@ class EitherTest {
     @Test
     void useLeft() {
         String lambda = "lambda";
-        Either<String, String> m = unwrap(new Either.Left<String, String>(lambda).map(i -> i +"!"));
+        Either<String, String> m = new Either.Left<String, String>(lambda).map(i -> i +"!");
 
         assertInstanceOf(Either.Left.class, m);
         Either.Left<String, String> left = (Either.Left<String, String>) m;
@@ -28,9 +28,9 @@ class EitherTest {
 
     @Test
     void useRightLeft() {
-        Either<String, Integer> m = unwrap(new Either.Right<String, Integer>(1)
+        Either<String, Integer> m =new Either.Right<String, Integer>(1)
                 .map(i -> i +1)
-                .bind(ignore -> new Either.Left<>("oh no")));
+                .bind(ignore -> new Either.Left<>("oh no"));
 
         assertInstanceOf(Either.Left.class, m);
         Either.Left<String, Integer> left = (Either.Left<String, Integer>) m;
