@@ -3,6 +3,7 @@ package lincks.maximilian.impl.monad;
 import org.junit.jupiter.api.Test;
 
 import static lincks.maximilian.impl.monad.Maybe.unwrap;
+import static lincks.maximilian.monadzero.MonadZero.filterM;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class MaybeTest {
@@ -21,5 +22,11 @@ class MaybeTest {
         assertEquals(Maybe.<Integer>nothing().map(i -> i +1), Maybe.nothing());
 
         assertEquals(Maybe.<Integer>nothing().bind(i -> new Maybe<>(i +1)), Maybe.nothing());
+    }
+
+    @Test
+    void testFilterM() {
+        assertEquals(Maybe.<Integer>nothing(), filterM(i -> i % 2 == 0, new Maybe<>(1)));
+        assertEquals(new Maybe<>(0), filterM(i -> i % 2 == 0, new Maybe<>(0)));
     }
 }

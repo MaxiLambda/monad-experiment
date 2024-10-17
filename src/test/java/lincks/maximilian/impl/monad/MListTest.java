@@ -6,8 +6,11 @@ import lincks.maximilian.util.BBF;
 import lincks.maximilian.util.BF;
 import org.junit.jupiter.api.Test;
 
+import java.util.function.Predicate;
+
 import static lincks.maximilian.impl.monad.MList.unwrap;
 import static lincks.maximilian.monads.Monad.join;
+import static lincks.maximilian.monadzero.MonadZero.filterM;
 import static lincks.maximilian.util.func.F.curry;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -38,9 +41,8 @@ public class MListTest {
 
     @Test
     void testZero() {
-        System.out.println(MonadZero.zero(MList.class));
-        System.out.println(MonadZero.zero(MList.class).mplus(new MList<>(1)));
-
+        assertEquals(MonadZero.zero(MList.class), MList.empty());
+        assertEquals(MonadZero.zero(MList.class).mplus(new MList<>(1)), new MList<>(1));
     }
 
     @Test
@@ -76,6 +78,15 @@ public class MListTest {
         MList<String> list1 = new MList<>("1", "2", "3");
         var res = MList.unwrap(list1.foldr(new BBF<String, MList<String>, String, MList<?>>((s, sm) -> sm.prepend(s)) {
         }));
-        System.out.println(res);
+        //they have to be equal, because the values are accumulated into a new list
+        assertEquals(res,list1);
+    }
+
+    @Test
+    void filterVsFilterM() {
+        MList<Integer> list1 = new MList<>(1,2,3,4);
+        Predicate<Integer> p = i -> i % 2 == 0;
+       assertEquals(new MList<>(2,4),list1.filter(p));
+       assertEquals(new MList<>(2,4),filterM(p,list1));
     }
 }

@@ -1,9 +1,9 @@
 package lincks.maximilian.impl.monad;
 
+import lincks.maximilian.alternative.Alternative;
 import lincks.maximilian.applicative.Applicative;
 import lincks.maximilian.applicative.ApplicativeConstructor;
 import lincks.maximilian.monadplus.MonadPlus;
-import lincks.maximilian.monadpluszero.MonadPlusZero;
 import lincks.maximilian.monads.Monad;
 import lincks.maximilian.monadzero.MZero;
 import lincks.maximilian.monadzero.MonadZero;
@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import static lincks.maximilian.applicative.ApplicativePure.pureUnsafeClass;
@@ -31,7 +32,7 @@ import static lincks.maximilian.applicative.ApplicativePure.pureUnsafeClass;
  */
 @ToString
 @EqualsAndHashCode
-public class MList<T> implements MonadPlusZero<MList<?>, T>, Traversable<MList<?>, T> {
+public class MList<T> implements MonadPlus<MList<?>, T>, Traversable<MList<?>, T>, Alternative<MList<?>, T> {
     //Create LazyList implementation => can be created from suppliers and is only evaluated on request
     //evaluated values must be preserved => two lists needed internally
     //map, bind etc. create new Lists
@@ -81,6 +82,36 @@ public class MList<T> implements MonadPlusZero<MList<?>, T>, Traversable<MList<?
     }
 
     @Override
+    public <R> MList<R> sequence(Applicative<MList<?>, Function<T, R>> f) {
+        return bind(v -> (MList<R>) f.map(ff -> ff.apply(v)));
+    }
+
+    @Override
+    public <R> R foldr(BiFunction<T, R, R> acc, R identity) {
+        AtomicReference<R> r = new AtomicReference<>(identity);
+        list.reversed().forEach(val -> {
+            r.set(acc.apply(val, r.get()));
+        });
+        return r.get();
+    }
+
+    @Override
+    public <A extends Applicative<A, ?>, R> Applicative<A, MList<R>> traverse(BF<T, R, A> f) {
+        if (list.isEmpty()) {
+            return (Applicative<A, MList<R>>) pureUnsafeClass(new MList<R>(), f.getType());
+        } else {
+            Applicative<A, MList<R>> xs = tail().traverse(f);
+            Applicative<A, R> x = f.applyTyped(head());
+            return x.liftA2((R y, MList<R> ys) -> ys.prepend(y), xs);
+        }
+    }
+
+    @Override
+    public MList<T> alternative(Supplier<? extends Alternative<MList<?>, T>> other) {
+        return list.isEmpty() ? unwrap(other.get()) : this;
+    }
+
+    @Override
     public <R> MList<R> bind(Function<T, Monad<MList<?>, R>> f) {
 
         List<R> r = list.stream()
@@ -93,21 +124,22 @@ public class MList<T> implements MonadPlusZero<MList<?>, T>, Traversable<MList<?
     }
 
     @Override
-    public <R> MList<R> map(Function<T, R> f) {
-        return unwrap(MonadPlusZero.super.map(f));
-    }
-
-    @Override
-    public <R> MList<R> then(Supplier<Monad<MList<?>, R>> f) {
-        return unwrap(MonadPlusZero.super.then(f));
-    }
-
-    @Override
     public MList<T> mplus(MonadPlus<MList<?>, T> other) {
         ArrayList<T> l = new ArrayList<>(list);
         l.addAll(unwrap(other).toList());
         return new MList<>(l);
     }
+
+    @Override
+    public <R> MList<R> map(Function<T, R> f) {
+        return unwrap(MonadPlus.super.map(f));
+    }
+
+    @Override
+    public <R> MList<R> then(Supplier<Monad<MList<?>, R>> f) {
+        return unwrap(MonadPlus.super.then(f));
+    }
+
 
     /**
      * @return a copy of this as a List.
@@ -142,28 +174,14 @@ public class MList<T> implements MonadPlusZero<MList<?>, T>, Traversable<MList<?
         return new MList<>(l);
     }
 
-    @Override
-    public <R> MList<R> sequence(Applicative<MList<?>, Function<T, R>> f) {
-        return bind(v -> (MList<R>) f.map(ff -> ff.apply(v)));
+    /**
+     * Filter MList by a predicate.
+     *
+     * @param p the predicate
+     * @return a new MList only with values that satisfy p.
+     */
+    public MList<T> filter(Predicate<T> p) {
+        return new MList<>(list.stream().filter(p).toList());
     }
 
-    @Override
-    public <R> R foldr(BiFunction<T, R, R> acc, R identity) {
-        AtomicReference<R> r = new AtomicReference<>(identity);
-        list.reversed().forEach(val -> {
-            r.set(acc.apply(val, r.get()));
-        });
-        return r.get();
-    }
-
-    @Override
-    public <A extends Applicative<A, ?>, R> Applicative<A, MList<R>> traverse(BF<T, R, A> f) {
-        if (list.isEmpty()) {
-            return (Applicative<A, MList<R>>) pureUnsafeClass(new MList<R>(), f.getType());
-        } else {
-            Applicative<A, MList<R>> xs = tail().traverse(f);
-            Applicative<A, R> x = f.applyTyped(head());
-            return x.liftA2((R y, MList<R> ys) -> ys.prepend(y), xs);
-        }
-    }
 }
