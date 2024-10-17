@@ -1,4 +1,4 @@
-package lincks.maximilian.impl;
+package lincks.maximilian.impl.monad;
 
 import lincks.maximilian.applicative.Applicative;
 import lincks.maximilian.applicative.ApplicativeConstructor;

@@ -1,10 +1,10 @@
-package lincks.maximilian.impl;
+package lincks.maximilian.impl.monad;
 
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static lincks.maximilian.impl.Effect.unwrap;
+import static lincks.maximilian.impl.monad.Effect.unwrap;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 

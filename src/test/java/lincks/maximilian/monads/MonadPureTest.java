@@ -1,7 +1,7 @@
 package lincks.maximilian.monads;
 
-import lincks.maximilian.impl.Either;
-import lincks.maximilian.impl.Maybe;
+import lincks.maximilian.impl.monad.Either;
+import lincks.maximilian.impl.monad.Maybe;
 import org.junit.jupiter.api.Test;
 
 import static lincks.maximilian.monads.MonadPure.pure;

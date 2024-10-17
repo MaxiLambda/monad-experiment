@@ -1,4 +1,4 @@
-package lincks.maximilian.impl;
+package lincks.maximilian.impl.monad;
 
 import lincks.maximilian.monadzero.MonadZero;
 import lincks.maximilian.traversable.Traversable;
@@ -6,7 +6,7 @@ import lincks.maximilian.util.BBF;
 import lincks.maximilian.util.BF;
 import org.junit.jupiter.api.Test;
 
-import static lincks.maximilian.impl.MList.unwrap;
+import static lincks.maximilian.impl.monad.MList.unwrap;
 import static lincks.maximilian.monads.Monad.join;
 import static lincks.maximilian.util.func.F.curry;
 import static org.junit.jupiter.api.Assertions.assertEquals;

@@ -1,4 +1,4 @@
-package lincks.maximilian.impl;
+package lincks.maximilian.impl.monad;
 
 import org.junit.jupiter.api.Test;
 

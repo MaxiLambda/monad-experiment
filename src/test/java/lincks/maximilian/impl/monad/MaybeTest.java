@@ -1,8 +1,8 @@
-package lincks.maximilian.impl;
+package lincks.maximilian.impl.monad;
 
 import org.junit.jupiter.api.Test;
 
-import static lincks.maximilian.impl.Maybe.unwrap;
+import static lincks.maximilian.impl.monad.Maybe.unwrap;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class MaybeTest {

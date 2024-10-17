@@ -1,9 +1,9 @@
 package lincks.maximilian.monads;
 
-import lincks.maximilian.impl.Maybe;
+import lincks.maximilian.impl.monad.Maybe;
 import org.junit.jupiter.api.Test;
 
-import static lincks.maximilian.impl.Maybe.unwrap;
+import static lincks.maximilian.impl.monad.Maybe.unwrap;
 import static lincks.maximilian.monads.Monad.join;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
