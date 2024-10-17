@@ -9,7 +9,11 @@ import java.util.function.Function;
  * {@code Flow.flow(1, i -> i * 2, i -> i + "!", String::length,...)}
  * Works with up to 16 Functions.
  */
-public class Flow {
+public final class Flow {
+
+    private Flow() {
+    }
+
     //clojure code to create flow(...) with as many arguments as one likes
     //;;create types
     //(defn types [count] (str "<" (clojure.string/join ", " (for [x (range 1 (+ count 1))] (str "T" x))) ">"))
@@ -19,7 +23,6 @@ public class Flow {
     //(defn body [count] (str "return f1" (apply str (for [x (range 2 (+ count 1))] (str ".andThen(f" x ")"))) ".apply(val);"))
     //;;put everything together
     //(defn create [count] (str "public " (types (+ count 1)) " T" (+ count 1) " flow(" (args count) ") { " (body count) " }"))
-
 
     //TODO maybe create version of this with Maybe/Either(or Failable) or a MonadStack (Transformer) to help with possible exceptions/null values
 

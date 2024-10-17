@@ -1,13 +1,27 @@
 package lincks.maximilian.monadzero;
 
+import lincks.maximilian.util.Bottom;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Optional;
 
-public interface MonadZero<M extends MonadZero<M, ?>, T> {
+/**
+ * Describes a Class where Instances can be created for any type without a parameter.
+ */
+public interface MonadZero<M extends MonadZero<M, ?>, T> extends Bottom<M, T> {
 
-    static <M extends MonadZero<M, T>, T> M zero(Class<M> clazz) {
+    /**
+     * Static method used to create a static no parameter Instance of a Class.
+     * <p>
+     * Used in contexts where the used Type of M is unknown.
+     *
+     * @param clazz the class to create the instance for.
+     * @param <M>   the Type of the class.
+     * @return a new Instance of type M.
+     */
+    static <M extends MonadZero<M, ?>> M zero(Class<M> clazz) {
 
         Optional<Method> creator = Arrays.stream(clazz.getMethods())
                 .filter(method -> method.getDeclaredAnnotation(MZero.class) != null)

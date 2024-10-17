@@ -7,7 +7,7 @@ import java.lang.annotation.Target;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * Annotate a Type implementing {@link <S,T> Monad<S,T>} with this method, if another class
+ * Annotate a Type implementing {@link Applicative} with this method, if another class
  * implements the {@link ApplicativeConstructor} method.
  */
 @Retention(RUNTIME)

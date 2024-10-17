@@ -8,8 +8,8 @@ import lincks.maximilian.monads.Monad;
 import lincks.maximilian.monadzero.MZero;
 import lincks.maximilian.monadzero.MonadZero;
 import lincks.maximilian.traversable.Traversable;
+import lincks.maximilian.util.BF;
 import lincks.maximilian.util.Bottom;
-import lincks.maximilian.util.func.ApplicativeFunction;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
@@ -21,14 +21,25 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static lincks.maximilian.applicative.ApplicativePure.pure;
+import static lincks.maximilian.applicative.ApplicativePure.pureUnsafeClass;
 
+/**
+ * Eager Implementation of a Monadic List.
+ * Backed by regular Lists. Each list manipulation creates a new List.
+ * This class lacks quite a few functions that regular java lists provide.
+ * Use {@link #toList()} and {@link #fromList(List)} for these functions for now.
+ */
 @ToString
 @EqualsAndHashCode
 public class MList<T> implements MonadPlusZero<MList<?>, T>, Traversable<MList<?>, T> {
-
+    //Create LazyList implementation => can be created from suppliers and is only evaluated on request
+    //evaluated values must be preserved => two lists needed internally
+    //map, bind etc. create new Lists
     private final List<T> list;
 
+    /**
+     * Create a new empty list.
+     */
     public MList() {
         list = List.of();
     }
@@ -46,15 +57,25 @@ public class MList<T> implements MonadPlusZero<MList<?>, T>, Traversable<MList<?
         this.list = List.copyOf(list);
     }
 
+    /**
+     * static function used to create new MLists with {@link MonadZero#zero(Class)}
+     */
     @MZero
     public static <T> MList<T> empty() {
         return new MList<>();
     }
 
-    public static <T, M extends Bottom<MList<?>, T>> MList<T> unwrap(M m) {
+
+    /**
+     * Cast to MList if wrapped in other type.
+     */
+    public static <T> MList<T> unwrap(Bottom<MList<?>, T> m) {
         return (MList<T>) m;
     }
 
+    /**
+     * crate a new MList from list. An immutable copy is used.
+     */
     public static <T> MList<T> fromList(List<T> list) {
         return new MList<>(list);
     }
@@ -88,19 +109,34 @@ public class MList<T> implements MonadPlusZero<MList<?>, T>, Traversable<MList<?
         return new MList<>(l);
     }
 
+    /**
+     * @return a copy of this as a List.
+     */
     public List<T> toList() {
         return List.copyOf(list);
     }
 
+    /**
+     * @return the first element of the list. Throws an exception if called on an empty list.
+     */
     public T head() {
-        return list.get(0);
+        return list.getFirst();
     }
 
+    /**
+     * @return a new MList without the first element. Throws an excepting if called on an empty list.
+     */
     public MList<T> tail() {
         return new MList<>(list.subList(1, list.size()));
     }
 
-    public MList<T> append(T t) {
+    /**
+     * Prepends a value to this.
+     *
+     * @param t the value to prepend.
+     * @return a new MList with t prepended.
+     */
+    public MList<T> prepend(T t) {
         List<T> l = new ArrayList<>(List.of(t));
         l.addAll(list);
         return new MList<>(l);
@@ -108,7 +144,7 @@ public class MList<T> implements MonadPlusZero<MList<?>, T>, Traversable<MList<?
 
     @Override
     public <R> MList<R> sequence(Applicative<MList<?>, Function<T, R>> f) {
-        return bind(v -> (MList<R>) f.map(ff ->  ff.apply(v)));
+        return bind(v -> (MList<R>) f.map(ff -> ff.apply(v)));
     }
 
     @Override
@@ -121,13 +157,13 @@ public class MList<T> implements MonadPlusZero<MList<?>, T>, Traversable<MList<?
     }
 
     @Override
-    public <A extends Applicative<A, ?>, R> Applicative<A, MList<R>> traverse(ApplicativeFunction<T, R, A> f) {
+    public <A extends Applicative<A, ?>, R> Applicative<A, MList<R>> traverse(BF<T, R, A> f) {
         if (list.isEmpty()) {
-            return (Applicative<A, MList<R>>) pure(new MList<R>(), (Class<Applicative>) f.getApplicativeType());
+            return (Applicative<A, MList<R>>) pureUnsafeClass(new MList<R>(), f.getType());
         } else {
             Applicative<A, MList<R>> xs = tail().traverse(f);
-            Applicative<A, R> x = f.apply(head());
-            return x.liftA2((R y, MList<R> ys) -> ys.append(y), xs);
+            Applicative<A, R> x = f.applyTyped(head());
+            return x.liftA2((R y, MList<R> ys) -> ys.prepend(y), xs);
         }
     }
 }

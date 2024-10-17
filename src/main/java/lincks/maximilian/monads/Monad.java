@@ -2,6 +2,7 @@ package lincks.maximilian.monads;
 
 import lincks.maximilian.applicative.Applicative;
 import lincks.maximilian.applicative.ApplicativeConstructor;
+import lincks.maximilian.applicative.ApplicativePure;
 
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -23,11 +24,27 @@ import static lincks.maximilian.monads.MonadPure.pure;
  * }}</pre>
  * This helps because {@link Monad#bind(Function)} and {@link Monad#map(Function)} both return
  * instances of {@code Monad<MyMonad<?>,T>}.
+ * <p>
+ * Every Monad is a {@link Applicative}. Therefore, the {@link ApplicativePure#pure} works just as well as {@link MonadPure#pure(Class)}.
  *
  * @param <M> the monadic Type.
  * @param <T> the Type wrapped by the monad.
  */
 public interface Monad<M extends Monad<M, ?>, T> extends Applicative<M, T> {
+
+    /**
+     * Joins a nested Monad structure of the same type.
+     *
+     * @param outer   the monad to join.
+     * @param <Outer> the type definition of the outer monad.
+     * @param <Inner> the type definition of the inner monad.
+     * @param <M>     the monadic type.
+     * @param <T>     the type parameter of the monad.
+     * @return the joined monad.
+     */
+    static <Outer extends Monad<M, Inner>, Inner extends Monad<M, T>, M extends Monad<M, ?>, T> Inner join(Outer outer) {
+        return (Inner) outer.bind(m -> m);
+    }
 
     /**
      * Creates a new Monad from a value wrapped in another monad.

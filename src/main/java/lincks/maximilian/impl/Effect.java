@@ -2,7 +2,6 @@ package lincks.maximilian.impl;
 
 import lincks.maximilian.alternative.Alternative;
 import lincks.maximilian.applicative.ApplicativeConstructor;
-import lincks.maximilian.applicative.ApplicativeConstructorDelegate;
 import lincks.maximilian.monads.Monad;
 import lincks.maximilian.monadzero.MZero;
 import lincks.maximilian.util.Bottom;
@@ -12,32 +11,77 @@ import lombok.ToString;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-/** Lazy, even on alternative, maybe implement non-lazy version (on alternative)*/
+/**
+ * Describes a lazy Effect which might fail.
+ * The Effect is evaluated if the result is requested by {@link #get()} or when the effect is forced with {@link #evaluate()}.
+ * TODO Lazy, even on alternative, maybe implement non-lazy version (on alternative)
+ */
 public interface Effect<T> extends Monad<Effect<?>, T>, Alternative<Effect<?>, T> {
 
     Effect<?> error = new SupplierEffect<>(() -> null);
 
+    /**
+     * Creates an empty failed effect over any Type.
+     *
+     * @param <T> the type of the effect.
+     * @return a error/failed effect.
+     */
     @MZero
     static <T> Effect<T> error() {
         return (Effect<T>) error;
     }
 
+    /**
+     * Unwrap an Effect if the typing is off.
+     *
+     * @param effect the effect to cast.
+     * @param <T>    the type of the effect.
+     * @return the cast effect.
+     */
     static <T> Effect<T> unwrap(Bottom<Effect<?>, T> effect) {
         return (Effect<T>) effect;
     }
 
+    /**
+     * Create a new Effect from a runnable. This Effect fails if the runnable throws.
+     *
+     * @param runnable the function to run as an Effect.
+     * @return the Effect over the Runnable.
+     */
     static Effect<Void> fromRunnable(Runnable runnable) {
         return new SupplierEffect<>(runnable);
     }
 
+    /**
+     * Create a new Effect form a Supplier. This Effect fails if the Supplier throws.
+     *
+     * @param supplier teh function to run as an Effect.
+     * @param <T>      the type of the value returned by this Effect.
+     * @return a new Effect, which executes the Supplier and returns it's value.
+     */
     static <T> Effect<T> fromSupplier(Supplier<T> supplier) {
         return new SupplierEffect<>(supplier);
     }
 
+    /**
+     * Factory Method for Effects, based on a single value. Nothing happens if this Effect is run. Just the given value is returned.
+     * This Effect can never fail.
+     *
+     * @param value the value to wrap as an Effect.
+     * @param <T>   the type of the Effect.
+     * @return a new Effect which returns value and never fails.
+     */
     static <T> Effect<T> of(T value) {
         return new SupplierEffect<>(value);
     }
 
+    /**
+     * Checks if the current effect has failed. If false is returned the effect might still fail when it's execution is requested.
+     * Evaluating an Effect with {@link #evaluate()} runs the Effect (with possible side effects) and returns a new Effect.
+     * Calling {@link #isError()} on that effect provides certainty if the effect can fail.
+     *
+     * @return weather or not this has failed yet.
+     */
     default boolean isError() {
         //compare references
         //error.equals(this) is not used to Comparison by value gives the correct results,
@@ -45,9 +89,17 @@ public interface Effect<T> extends Monad<Effect<?>, T>, Alternative<Effect<?>, T
         return this == error;
     }
 
+    /**
+     * Returns a new Effect with the effect of this Effect or another effect.
+     * If {@link #isError()} is true, other is returned. Otherwise, the new Effect will try to run this effect and only
+     * on failure run other.
+     *
+     * @param other the alternative Effect to run
+     * @return a new Effect which tries to run this Effects effect and runs others Effect on failure.
+     */
     @Override
-    default Effect<T> alternative(Supplier<Alternative<Effect<?>, T>> other) {
-        if(isError()) {
+    default Effect<T> alternative(Supplier<? extends Alternative<Effect<?>, T>> other) {
+        if (isError()) {
             return unwrap(other.get());
         } else {
             return new DelegatingEffect<>(() -> {
@@ -58,20 +110,32 @@ public interface Effect<T> extends Monad<Effect<?>, T>, Alternative<Effect<?>, T
     }
 
     /**
+     * Returns the result of running this Effect.
      * Only works if {@link Effect#isError()} is false.
      * If this is an error, a RuntimeException is thrown.
+     * <p>
+     * FORCES THE EVALUATION IF THIS EFFECT. SIDE-EFFECTS happen.
+     *
      * @return the value of this effect.
      */
     T get();
 
+    /**
+     * Forces the evaluation of this and returns a new Effect.
+     * The new Effect is an error if an Exception was thrown, otherwise the new Effect just returns the result.
+     * <p>
+     * FORCES THE EVALUATION IF THIS EFFECT. SIDE-EFFECTS happen.
+     *
+     * @return a new Effect, either an error or an Effect which only returns the result of this Effect.
+     */
     Effect<T> evaluate();
 
+    /**
+     * Effect implementation based on Suppliers.
+     */
     @EqualsAndHashCode
     @ToString
     class SupplierEffect<T> implements Effect<T> {
-
-        //    public final static Effect<Void> NO_OP = new Effect<>(()  -> null);
-
 
         private final Supplier<T> supplier;
 
@@ -101,7 +165,7 @@ public interface Effect<T> extends Monad<Effect<?>, T>, Alternative<Effect<?>, T
             };
         }
 
-
+        @Override
         public T get() {
             if (!isError()) return supplier.get();
             throw new RuntimeException("Error supplier, dont use get here");
@@ -132,19 +196,22 @@ public interface Effect<T> extends Monad<Effect<?>, T>, Alternative<Effect<?>, T
         }
     }
 
+    /**
+     * Effect implementation based on delegating work to other effects. Used to achieve laziness.
+     * Necessary for Laziness when calling {@link Effect#bind(Function)} or similar functions.
+     */
     class DelegatingEffect<T> implements Effect<T> {
+
+        private final Supplier<Effect<T>> effectSupplier;
 
         public DelegatingEffect(Supplier<Effect<T>> effect) {
             this.effectSupplier = effect;
         }
 
-        private Supplier<Effect<T>> effectSupplier;
-
         @Override
         public T get() {
             return effectSupplier.get().get();
         }
-
 
         @Override
         public <R> Effect<R> bind(Function<T, Monad<Effect<?>, R>> f) {
