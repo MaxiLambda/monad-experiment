@@ -1,6 +1,7 @@
 package lincks.maximilian.applicative;
 
 import lincks.maximilian.functor.Functor;
+import lincks.maximilian.impl.monad.MList;
 import lincks.maximilian.util.func.F;
 
 import java.util.function.BiFunction;
@@ -8,6 +9,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static lincks.maximilian.applicative.ApplicativePure.pure;
+import static lincks.maximilian.util.func.F.reverse;
 
 /**
  * An Extension of Functor with the ability to use {@link ApplicativePure#pure} to create new Instances.
@@ -30,7 +32,7 @@ public interface Applicative<A extends Applicative<A, ?>, T> extends Functor<A, 
      *
      * @param f   Applicative wrapped over a function.
      * @param <R> the return type of f, and the type the resulting Applicative wraps over.
-     * @return
+     * @return the result of applying the context of this applicative to the function in the Applicative f.
      */
     default <R> Applicative<A, R> sequence(Applicative<A, Function<T, R>> f) {
         BiFunction<Function<T, R>, T, R> x = F.uncurry(Function.identity());
@@ -74,5 +76,22 @@ public interface Applicative<A extends Applicative<A, ?>, T> extends Functor<A, 
      */
     default <R> Applicative<A, R> liftA(Function<T, R> f) {
         return sequence(pure(f, this.getClass()));
+    }
+
+    /**
+     * Create a new Applicative wrapped over a MList of num times applicative.
+     * This function is eager and recursive. If num == 0, returns the applicative over an empty MList.
+     *
+     * @param num         the amount of instances of applicative in the result
+     * @param applicative the applicative to replicate
+     * @param <A>         the type of the applicative.
+     * @param <T>         the type the given applicative is wrapped over
+     * @return an Applicative of type A wrapped over an MList containing the value of applicative num times.
+     */
+    static <A extends Applicative<A, ?>, T> Applicative<A, MList<T>> replicateA(int num, Applicative<A, T> applicative) {
+        BiFunction<MList<T>, T, MList<T>> f = MList::prepend;
+        return num == 0
+                ? pure(new MList<>(), applicative.getClass())
+                : applicative.liftA2(reverse(f), replicateA(num - 1, applicative));
     }
 }
