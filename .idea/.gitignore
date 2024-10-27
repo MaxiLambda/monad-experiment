@@ -1,0 +1,14 @@
+# Default ignored files
+/shelf/
+/workspace.xml
+# Editor-based HTTP Client requests
+/httpRequests/
+# Datasource local storage ignored files
+/dataSources/
+/dataSources.local.xml
+/libraries/Leiningen__org_clojure_core_specs_alpha_0_4_74.xml
+/libraries/Leiningen__lincks_maximilian_monads_monad_experiment_1_0_SNAPSHOT.xml
+/libraries/Leiningen__org_clojure_spec_alpha_0_5_238.xml
+/libraries/Leiningen__nrepl_1_0_0.xml
+/libraries/Leiningen__org_nrepl_incomplete_0_1_0.xml
+/libraries/Leiningen__org_clojure_clojure_1_12_0.xml
