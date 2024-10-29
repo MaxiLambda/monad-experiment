@@ -49,13 +49,22 @@ There difference between the clojure and the haskell solution is not that big. T
 (doM
       [a (getValueA)]
       [b valueB)]
+      [c (getValueC b)]
       (someOperation)
-      (doWithResults a b))
+      [d (MonadPure/pure (getValueD a) M)]
+      (doWithResults d c))
 ```
 ```haskell
 do
       a <- getValueA
       b <- valueB
+      c <- getValueC b
       someOperation
-      doWithResults a b
+      d <- return $ getValueD a
+      doWithResults d c
 ```
+* `getValueA` is a no argument function returning a monadic value of the monad M
+* `valueB` is a variable/constant with a monadic value of the monad M
+* `getValueC` is a one argument funciton returning a monadic value of the monad M
+* `someOperation` is a no argument function returing a monadic value of the monad M
+* `getValueD` is a one argument function retuning a value
