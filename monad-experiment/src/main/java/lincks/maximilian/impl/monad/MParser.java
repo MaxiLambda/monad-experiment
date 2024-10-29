@@ -72,7 +72,7 @@ public class MParser<S, T> implements Monad<MParser<S, ?>, T>, Alternative<MPars
      */
     @MZero
     public static <S, T> MParser<S, T> empty() {
-        return new MParser<>(null);
+        return new MParser<>((ignore) -> List.of());
     }
 
     @Override

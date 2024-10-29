@@ -4,36 +4,39 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
+import static lincks.maximilian.impl.monad.MParser.unwrap;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class MParserTest {
-    Function<Character, MParser<Character, Character>> digit = MParser::tokenMatching;
+    Function<Character, MParser<Character, Character>> exact = MParser::tokenMatching;
     Function<String, MParser<Character, String>> string = (str) ->
             str.chars()
                     .mapToObj(c -> (char) c)
-                    .map(digit)
+                    .map(exact)
                     .reduce(
                             new MParser<>(""),
                             (acc, chrParser) -> acc.then((strR, chrR) -> strR + chrR, chrParser),
                             (l, r) -> l.then(String::concat, r));
 
-
     List<Character> chars = "hallo".chars().mapToObj(i -> (char) i).toList();
     List<Character> chars2 = "hhhoh".chars().mapToObj(i -> (char) i).toList();
     List<Character> chars3 = "hoh".chars().mapToObj(i -> (char) i).toList();
 
-    //many does not work atm. therefore this test would be useless
-//    @Test
-//    void many() {
-//        var p = unwrap(digit.apply('h').many()).parse(chars2);
-//        System.out.println(p);
-//    }
+    //many does not work atm. therefore use many2
+    @Test
+    void many() {
+        var p = unwrap(exact.apply('h').many2()).parse(chars2);
+        System.out.println(p);
+    }
 
     @Test
     void parseSingleToken() {
-        var results = digit.apply('h').parse(chars3);
+        var results = exact.apply('h').parse(chars3);
         assertEquals(results.size(), 1);
+        System.out.println(results);
+
 
         var result = results.getFirst();
         assertEquals(List.of('o', 'h'), result.remainingTokens());
@@ -41,11 +44,30 @@ class MParserTest {
     }
 
     @Test
+    void addParser() {
+        //can parse all positive integers
+        MParser<Character, Integer> numParser = "1234567890".chars()
+                .mapToObj(i -> (char) i)
+                .map(exact)
+                .reduce(MParser.empty(), MParser::either)
+                .many2()
+                .map(chars -> chars.stream().map(String::valueOf).collect(Collectors.joining()))
+                .map(Integer::valueOf);
+
+        MParser<Character, Integer> addParser = numParser.then((i, op) -> i, MParser.tokenMatching('+')).then(Integer::sum, numParser);
+
+
+
+        var res = addParser.parse("14+7".chars().mapToObj(i -> (char) i).toList());
+        assertEquals(21, res.getFirst().value());
+    }
+
+    @Test
     void parseMultipleTokens() {
-        var results = digit.apply('h')
+        var results = exact.apply('h')
                 .then(
                         List::of,
-                        digit.apply('o'))
+                        exact.apply('o'))
                 .parse(chars3);
         assertEquals(1, results.size());
 
@@ -57,7 +79,7 @@ class MParserTest {
 
     @Test
     void parseManyTimes() {
-        var results = digit.apply('h').many2().parse(chars2);
+        var results = exact.apply('h').many2().parse(chars2);
         assertEquals(1, results.size());
 
         var result = results.getFirst();
@@ -67,8 +89,8 @@ class MParserTest {
 
     @Test
     void parsePlusMany() {
-        var results = digit.apply('h')
-                .plus(digit.apply('o'))
+        var results = exact.apply('h')
+                .plus(exact.apply('o'))
                 .many2()
                 .parse(chars3);
         assertEquals(1, results.size());
@@ -80,13 +102,13 @@ class MParserTest {
 
     @Test
     void failParse() {
-        var results = digit.apply('i').parse(chars3);
+        var results = exact.apply('i').parse(chars3);
         assertEquals(0, results.size());
     }
 
     @Test
     void failParseEmpty() {
-        var results = digit.apply('i').parse(List.of());
+        var results = exact.apply('i').parse(List.of());
         assertEquals(0, results.size());
     }
 
