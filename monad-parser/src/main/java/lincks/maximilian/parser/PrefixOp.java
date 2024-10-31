@@ -1,13 +1,14 @@
 package lincks.maximilian.parser;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lincks.maximilian.parser.token.LiteralToken;
+import lincks.maximilian.parser.token.OperatorToken;
+import lincks.maximilian.parser.token.Symbol;
 
-@RequiredArgsConstructor
-@Getter
-public class PrefixOp {
-    //TODO action, receives array with arity many elements of type int/long/double
-    private final int level;
-    private final int arity;
-    private final Token token;
+import java.util.List;
+import java.util.function.Function;
+
+public class PrefixOp<T> extends OperatorToken<T> {
+    public PrefixOp(Symbol symbol, int arity, int level) {
+        super(symbol, arity, level);
+    }
 }

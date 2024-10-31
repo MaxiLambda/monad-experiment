@@ -75,6 +75,11 @@ public class MParser<S, T> implements Monad<MParser<S, ?>, T>, Alternative<MPars
         return new MParser<>((ignore) -> List.of());
     }
 
+    public static <S, T> MParser<S, MList<T>> accumulating(MList<MParser<S, T>> parsers) {
+        return parsers.foldr((val, acc) -> val.then((v,l) -> l.append(v), acc), new MParser<>(new MList<>()));
+    }
+
+
     @Override
     public <R> MParser<S, R> bind(Function<T, Monad<MParser<S, ?>, R>> f) {
         return new MParser<>(input ->
@@ -147,14 +152,22 @@ public class MParser<S, T> implements Monad<MParser<S, ?>, T>, Alternative<MPars
      *
      * @return a parser applying the current parse as often as possible but at least once.
      */
-    public MParser<S, List<T>> many2() {
-        return bind(x -> many2().bind(xs -> {
-            ArrayList<T> results = new ArrayList<>();
-            results.add(x);
-            results.addAll(xs);
-            return new MParser<S, List<T>>(results);
-        }).either(new MParser<>(List.of(x))));
+    public MParser<S, MList<T>> many2() {
+        return bind(x -> many2()
+                .bind(xs -> new MParser<>(xs.prepend(x)))
+                .either(new MParser<>(new MList<>(x))));
     }
+
+    public MParser<S, MList<T>> some2() {
+        return new MParser<>(input -> {
+            List<ParseResult<S, MList<T>>> result = many2().parse(input);
+            if (result.isEmpty()) {
+                return List.of(new ParseResult<>(new MList<>(), input));
+            }
+            return result;
+        });
+    }
+
 
     /**
      * Creates a Parser which applies the current parser and then, if possible the other parser.
@@ -189,15 +202,23 @@ public class MParser<S, T> implements Monad<MParser<S, ?>, T>, Alternative<MPars
 
     @Override
     public MParser<S, T> alternative(Supplier<? extends Alternative<MParser<S, ?>, T>> other) {
-        return new MParser<>(input -> {
-            List<ParseResult<S, T>> result1 = parse(input);
-            if (result1.isEmpty()) {
-                return result1;
-            } else {
-                return unwrap(other.get()).parse(input);
-            }
-        });
+        return either(unwrap(other.get()));
     }
+
+    /**
+     * Consumes exactly one token matching f
+     */
+    public MParser<S, T> consume(Predicate<S> f) {
+        return then((val, ignore) -> val, MParser.matching(f));
+    }
+
+    /**
+     * Consumes all tokens till f does not match anymore. Can consume zero tokens.
+     */
+    public MParser<S, T> consumeAll(Predicate<S> f) {
+        return maybe((val, ignore) -> val, MParser.matching(f).many2());
+    }
+
 
     /**
      * Wrapper for the Result of Running a Parser.

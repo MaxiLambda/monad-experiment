@@ -4,8 +4,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
+import static lincks.maximilian.impl.monad.MParser.tokenMatching;
 import static lincks.maximilian.impl.monad.MParser.unwrap;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -51,11 +51,10 @@ class MParserTest {
                 .map(exact)
                 .reduce(MParser.empty(), MParser::either)
                 .many2()
-                .map(chars -> chars.stream().map(String::valueOf).collect(Collectors.joining()))
+                .map(chars -> chars.foldr((val, acc) -> val + acc, ""))
                 .map(Integer::valueOf);
 
         MParser<Character, Integer> addParser = numParser.then((i, op) -> i, MParser.tokenMatching('+')).then(Integer::sum, numParser);
-
 
 
         var res = addParser.parse("14+7".chars().mapToObj(i -> (char) i).toList());
@@ -120,5 +119,27 @@ class MParserTest {
         var result = results.getFirst();
         assertEquals(List.of(), result.remainingTokens());
         assertEquals("hallo", result.value());
+    }
+
+    @Test
+    void nWay() {
+        var x = MParser.tokenMatching('a').map(MList::new).plus(MParser.tokenMatching('a').many2()).parse(List.of('a', 'a'));
+        assertEquals(2, x.size());
+    }
+
+    @Test
+    void someTest() {
+        var r1 = MParser.tokenMatching("a").some2().then((a, b) -> a.mplus(new MList<>(b)), tokenMatching("b")).parse(List.of("b"));
+        var r2 = MParser.tokenMatching("a").some2().then((a, b) -> a.mplus(new MList<>(b)), tokenMatching("b")).parse(List.of("a", "a", "b"));
+
+        assertEquals(List.of(), r1.getFirst().remainingTokens());
+        assertEquals(List.of(), r2.getFirst().remainingTokens());
+
+    }
+
+    @Test
+    void empty() {
+        var x = MParser.empty().then( (ignore, a) -> a,tokenMatching("a")).parse(List.of("a"));
+        System.out.println(x);
     }
 }

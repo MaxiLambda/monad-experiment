@@ -21,6 +21,8 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 import static lincks.maximilian.applicative.ApplicativePure.pureUnsafeClass;
 
@@ -169,8 +171,14 @@ public class MList<T> implements MonadPlus<MList<?>, T>, Traversable<MList<?>, T
      * @return a new MList with t prepended.
      */
     public MList<T> prepend(T t) {
-        List<T> l = new ArrayList<>(List.of(t));
-        l.addAll(list);
+        List<T> l = new ArrayList<>(list);
+        l.addFirst(t);
+        return new MList<>(l);
+    }
+
+    public MList<T> append(T t) {
+        List<T> l = new ArrayList<>(list);
+        l.addLast(t);
         return new MList<>(l);
     }
 
@@ -184,4 +192,7 @@ public class MList<T> implements MonadPlus<MList<?>, T>, Traversable<MList<?>, T
         return new MList<>(list.stream().filter(p).toList());
     }
 
+    public static <T> Collector<T, ?, MList<T>> toMList() {
+        return Collectors.collectingAndThen(Collectors.toList(), MList::fromList);
+    }
 }

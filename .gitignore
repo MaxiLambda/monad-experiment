@@ -16,3 +16,4 @@
 /monad-macro/.nrepl-port
 /monad-macro/monad-macro.iml
 /.idea/ClojureProjectResolveSettings.xml
+/monad-parser/target/

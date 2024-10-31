@@ -1,5 +1,5 @@
 package lincks.maximilian.parser;
 
-public class Parser {
+public class Interpreter {
 
 }

@@ -1,5 +1,8 @@
 package lincks.maximilian.parser;
 
+import lincks.maximilian.parser.token.Symbol;
+import lincks.maximilian.parser.token.Token;
+
 import java.util.List;
 
 /**
@@ -25,23 +28,13 @@ public class App {
         //F   -> (E) | int
 
         //custom tokens
-        Token token1 = new Token("!");
-        Token token2 = new Token("@");
-        Token token3 = new Token("%");
-        Token token4 = new Token("?");
-        Token token5 = new Token("+");
-        Token token6 = new Token("*");
+        PrefixOp<Integer> operator1 = new PrefixOp<>(new Symbol("!"), 1, 0);
+        PrefixOp<Integer> operator2 = new PrefixOp<>(new Symbol("@"), 1, 1);
+        PrefixOp<Integer> operator3 = new PrefixOp<>(new Symbol("%"), 2, 0);
+        PrefixOp<Integer> operator4 = new PrefixOp<>(new Symbol("?"), 2, 1);
+        InfixOp<Integer> operator5 = new InfixOp<>(new Symbol("+"), 0);
+        InfixOp<Integer> operator6 = new InfixOp<>(new Symbol("*"),1);
 
-        List<Token> operations = List.of(token1, token2, token3, token4, token5, token6);
-
-        List<PrefixOp> prefixOps = List.of(
-                new PrefixOp(0, 1, token1),
-                new PrefixOp(1, 1, token2),
-                new PrefixOp(0, 2, token3),
-                new PrefixOp(1, 2, token4));
-
-        List<InfixOp> infixOps = List.of(
-                new InfixOp(0, token5),
-                new InfixOp(1, token6));
+        List<Token> operations = List.of(operator1, operator2, operator3, operator4, operator5, operator6);
     }
 }
