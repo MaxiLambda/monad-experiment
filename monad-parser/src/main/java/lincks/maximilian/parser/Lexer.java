@@ -39,7 +39,6 @@ public class Lexer {
 
         return symbolParser.parse(cleanedInput.chars().mapToObj(c -> (char) c).toList())
                 .stream()
-                .peek(System.out::println)
                 .filter(r -> r.remainingTokens().isEmpty())
                 .map(MParser.ParseResult::value)
                 .toList();
