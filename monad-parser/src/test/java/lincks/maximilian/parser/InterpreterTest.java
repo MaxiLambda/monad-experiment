@@ -9,18 +9,20 @@ import lincks.maximilian.parser.parser.ast.SymbolLiteral;
 import lincks.maximilian.parser.parser.ast.ValueLiteral;
 import lincks.maximilian.parser.token.OperatorToken;
 import lincks.maximilian.parser.token.Symbol;
+import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toMap;
+import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Hello world!
- */
-public class App {
-    public static void main(String[] args) {
+class InterpreterTest {
+
+
+    @Test
+    void runMathLike() {
         //example for the language given in the README
         //! as unary prefix operator level 0
         //@ as unary prefix operator level 1
@@ -102,9 +104,84 @@ public class App {
                     return new ValueLiteral<>(x * y);
                 }
         ));
-
         Interpreter<Integer> interpreter = new Interpreter<>(parser, fromLiteral, context);
+        assertEquals(7,interpreter.run("(!1;)+2;*(%3;@4;)"));
 
-        System.out.println(interpreter.run("(!1;)+2;*(%3;@4;)"));
+    }
+
+    @Test
+    void minus() {
+        Symbol minusS = new Symbol("-");
+
+        Lexer lexer = new Lexer(new MList<>(minusS));
+
+        //custom Operations
+        InfixOp<Integer> operator5 = new InfixOp<>(minusS, 0);
+
+        Map<Symbol, OperatorToken<Integer>> operators = Stream.of(operator5).collect(toMap(OperatorToken::getSymbol, Function.identity()));
+
+        Parser<Integer> parser = new Parser<>(lexer, operators);
+
+        Function<Literal<Integer>, Integer> fromLiteral = l -> {
+            switch (l) {
+                case SymbolLiteral<Integer> v -> {
+                    return Integer.valueOf(v.getSymbol().symbol());
+                }
+                case ValueLiteral<Integer> v -> {
+                    return v.getValue();
+                }
+            }
+        };
+
+        Context<Integer> context = new Context<>(Map.of(
+                minusS, l -> {
+                    var xs = l.map(fromLiteral);
+                    var x = xs.head();
+                    var y = xs.tail().head();
+                    return new ValueLiteral<>(x - y);
+                }
+        ));
+        Interpreter<Integer> interpreter = new Interpreter<>(parser, fromLiteral, context);
+        assertEquals(-1,interpreter.run("1;-1;-1;"));
+    }
+
+
+    @Test
+    void customLangTest() {
+        Symbol concat = new Symbol(",");
+
+        Lexer lexer = new Lexer(new MList<>(concat));
+
+        //custom Operations
+        InfixOp<String> operator1 = new InfixOp<>(concat, 0);
+
+        Map<Symbol, OperatorToken<String>> operators = Stream.of(operator1)
+                .collect(toMap(OperatorToken::getSymbol, Function.identity()));
+
+        Parser<String> parser = new Parser<>(lexer, operators);
+
+        Function<Literal<String>, String> fromLiteral = l -> {
+            switch (l) {
+                case SymbolLiteral<String> v -> {
+                    return v.getSymbol().symbol();
+                }
+                case ValueLiteral<String> v -> {
+                    return v.getValue();
+                }
+            }
+        };
+
+        Context<String> context = new Context<>(Map.of(
+                concat, l -> {
+                    System.out.println(l);
+                    var xs = l.map(fromLiteral);
+                    var x = xs.head();
+                    var y = xs.tail().head();
+                    System.out.println(x + "-" + y);
+                    return new ValueLiteral<>(x + "-" + y);
+                }
+        ));
+        Interpreter<String> interpreter = new Interpreter<>(parser, fromLiteral, context);
+        System.out.println(interpreter.run("1;,2;,3;"));
     }
 }

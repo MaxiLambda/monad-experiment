@@ -9,7 +9,6 @@ import lincks.maximilian.parser.token.OperatorToken;
 import lincks.maximilian.parser.token.Symbol;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -37,7 +36,7 @@ class ParserTest {
 
     Map<Symbol, OperatorToken<Integer>> operators = Stream.of(operator1, operator2, operator3, operator4, operator5, operator6).collect(toMap(OperatorToken::getSymbol, Function.identity()));
 
-    Parser<Integer> parser = new Parser<>(lexer, operators, (l) -> Integer.valueOf(l.getSymbol().toString()));
+    Parser<Integer> parser = new Parser<>(lexer, operators);
 
     @Test
     void infixTest() {
@@ -76,6 +75,14 @@ class ParserTest {
         assertEquals(new Expression<>(symbol4, new MList<>(
                 new SymbolLiteral<>(new Symbol("1")),
                 new SymbolLiteral<>(new Symbol("2")))), x);
+    }
+
+    @Test
+    void plusplusTest() {
+        var x = parser.run("1;+2;+3;");
+        //TODO
+//        var x = parser.run("1;+2;+3;+4;");
+        System.out.println(x);
     }
 
     @Test

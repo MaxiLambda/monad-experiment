@@ -28,6 +28,7 @@ public class Production {
             new Either.Left<>(new MList<>(new Production(0, Type.PREFIX_PRODUCTION, normalizeOperatorLevel)));
     private final int level;
     private final Type type;
+    @ToString.Exclude
     private final Function<Integer, Integer> normalizeOperatorLevel;
 
 //E   -> E' | !E | % E E
@@ -70,9 +71,11 @@ public class Production {
                     throw new RuntimeException("%s not expected".formatted(nextSymbol));
                 }
                 //assume literal or L_BRACE
-                yield new Either.Left<>(new MList<>(createProduction(level + 1, level == maxStrength
-                        ? Type.LAST_PRODUCTION
-                        : Type.PREFIX_PRODUCTION), createProduction(level, Type.INFIX_PRODUCTION)));
+                yield new Either.Left<>(new MList<>(
+                        createProduction(level + 1, level == maxStrength
+                                ? Type.LAST_PRODUCTION
+                                : Type.PREFIX_PRODUCTION),
+                        createProduction(level, Type.INFIX_PRODUCTION)));
             }
             case INFIX_PRODUCTION -> new Either.Left<>(new MList<>());
             case LAST_PRODUCTION -> {

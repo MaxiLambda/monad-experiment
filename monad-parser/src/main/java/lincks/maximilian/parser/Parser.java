@@ -4,14 +4,13 @@ import lincks.maximilian.impl.monad.Either;
 import lincks.maximilian.impl.monad.MList;
 import lincks.maximilian.parser.parser.ast.AstExpression;
 import lincks.maximilian.parser.parser.ast.Expression;
+import lincks.maximilian.parser.parser.ast.Literal;
 import lincks.maximilian.parser.parser.ast.SymbolLiteral;
 import lincks.maximilian.parser.parser.ast.productions.Production;
-import lincks.maximilian.parser.token.LiteralToken;
 import lincks.maximilian.parser.token.OperatorToken;
 import lincks.maximilian.parser.token.Symbol;
 
 import java.util.*;
-import java.util.function.Function;
 
 import static lincks.maximilian.parser.parser.ast.productions.Production.INITIAL_PRODUCTION;
 import static lincks.maximilian.parser.parser.ast.productions.Production.isEpsilonProduction;
@@ -21,17 +20,15 @@ import static lincks.maximilian.parser.token.SyntaxToken.R_BRACE;
 public class Parser<T> {
     private final Lexer lexer;
     private final Map<Symbol, OperatorToken<T>> operators;
-    private final Function<LiteralToken<T>, T> f;
 
     //highes operator strength in operatorStrength
     private final int maxStrength;
     //mapping of OperatorToken.getLevel() to minimal Integer > 0 preserving "<" relation between levels
     private final Map<Integer, Integer> operatorStrength;
 
-    public Parser(Lexer lexer, Map<Symbol, OperatorToken<T>> operators, Function<LiteralToken<T>, T> f) {
+    public Parser(Lexer lexer, Map<Symbol, OperatorToken<T>> operators) {
         this.lexer = lexer;
         this.operators = operators;
-        this.f = f;
 
         HashMap<Integer, Integer> operatorStrength = new HashMap<>();
         List<Integer> levels = operators.values().stream().map(OperatorToken::getLevel).distinct().sorted().toList();
@@ -51,14 +48,21 @@ public class Parser<T> {
     }
 
     private AstExpression<T> generateAst(Either<MList<Production>, Production.OperatorProduction> production, Deque<Symbol> symbols) {
-        System.out.println(production);
+        switch (production) {
+            case Either.Left<MList<Production>, Production.OperatorProduction> v -> {
+                System.out.println("LIST: " + v.value());
+            }
+            case Either.Right<MList<Production>, Production.OperatorProduction> v -> {
+                System.out.println("OPERATOR (" + v.value().operator() + "): " + v.value().productions());
+            }
+        }
         return switch (production) {
             case Either.Left<MList<Production>, Production.OperatorProduction> v -> {
                 var x = generateAstList(v.value(), symbols);
                 if (x.size() > 1) {
                     if (x.tail().head() instanceof Expression<T> expression) {
                         //infix expressions are created here
-                        yield new Expression<>(expression.getSymbol(), expression.getArgs().prepend(x.head()));
+                        yield doInfix(expression, x.head());
                     }
                     System.err.printf("Should '%s' be of size 1%n", x);
                 }
@@ -105,10 +109,23 @@ public class Parser<T> {
     private AstExpression<T> generateAstOperatorExpression(Production.OperatorProduction operatorProduction, Deque<Symbol> symbols) {
         if (operatorProduction.productions().isEmpty()) {
             //No parameter expression => is a literal
-            symbols.removeFirst();
+            var removed = symbols.removeFirst();
+            System.out.println(removed);
             return new SymbolLiteral<>(operatorProduction.operator());
         }
-        symbols.removeFirst();
+        var removed = symbols.removeFirst();
+        System.out.println(removed);
         return new Expression<>(operatorProduction.operator(), generateAstList(operatorProduction.productions(), symbols));
+    }
+
+    //evaluates left to right
+    private AstExpression<T> doInfix(Expression<T> expression, AstExpression<T> literal) {
+        //if expression.getArgs().size() == 1 -> base case
+        if(expression.getArgs().size() == 2 && expression.getArgs().tail().head() instanceof Expression<T> inner) {
+            var args = new MList<>(literal, expression.getArgs().head());
+            return doInfix(inner, new Expression<>(expression.getSymbol(),args));
+        } else {
+            return new Expression<>(expression.getSymbol(), expression.getArgs().prepend(literal));
+        }
     }
 }
