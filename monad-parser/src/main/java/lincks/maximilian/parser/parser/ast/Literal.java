@@ -1,6 +1,6 @@
 package lincks.maximilian.parser.parser.ast;
 
-public interface Literal<T> extends AstExpression<T> {
+public sealed interface Literal<T> extends AstExpression<T> permits SymbolLiteral, ValueLiteral {
 
     default Literal<T> eval(Context<T> context) {
         return this;
