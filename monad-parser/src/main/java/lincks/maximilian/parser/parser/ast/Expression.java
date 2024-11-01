@@ -20,6 +20,6 @@ public class Expression<T> implements AstExpression<T> {
     public Literal<T> eval(Context<T> context) {
         return context.getReduction(symbol)
                 .map(f -> f.apply(args.map(arg -> arg.eval(context))))
-                .orElseThrow();
+                .get();
     }
 }

@@ -7,18 +7,15 @@ import lincks.maximilian.monadzero.MZero;
 import lincks.maximilian.util.Bottom;
 import lombok.ToString;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
 
 
 /**
  * Example Framework for a Monadic-Parser written in Java.
- * Set up a parser and then run {@link #parse(List)} on a list of S to obtain a {@link ParseResult}
+ * Set up a parser and then run {@link #parse(MList)} on a list of S to obtain a {@link ParseResult}
  *
  * @param <S> the type of values which are parsed e.g. chars
  * @param <T> the type of value which this parser returns e.g. string
@@ -26,20 +23,20 @@ import java.util.stream.Stream;
 @ToString
 public class MParser<S, T> implements Monad<MParser<S, ?>, T>, Alternative<MParser<S, ?>, T> {
 
-    private final Function<List<S>, List<ParseResult<S, T>>> parse;
+    private final Function<MList<S>, MList<ParseResult<S, T>>> parse;
 
     /**
      * Create a new Parser with the given parse function.
      *
      * @param parse the function used to parse tokens.
      */
-    public MParser(Function<List<S>, List<ParseResult<S, T>>> parse) {
+    public MParser(Function<MList<S>, MList<ParseResult<S, T>>> parse) {
         this.parse = parse;
     }
 
     @ApplicativeConstructor
     public MParser(T value) {
-        this.parse = (input) -> List.of(new ParseResult<>(value, input));
+        this.parse = (input) -> new MList(new ParseResult<>(value, input));
     }
 
     /**
@@ -54,9 +51,9 @@ public class MParser<S, T> implements Monad<MParser<S, ?>, T>, Alternative<MPars
      */
     public static <S> MParser<S, S> matching(Predicate<S> f) {
         return new MParser<>(input ->
-                input.isEmpty() || !f.test(input.getFirst())
-                        ? List.of()
-                        : List.of(new ParseResult<>(input.getFirst(), input.subList(1, input.size())))
+                input.isEmpty() || !f.test(input.head())
+                        ? MList.empty()
+                        : new MList<>(new ParseResult<>(input.head(), input.tail()))
         );
     }
 
@@ -72,23 +69,21 @@ public class MParser<S, T> implements Monad<MParser<S, ?>, T>, Alternative<MPars
      */
     @MZero
     public static <S, T> MParser<S, T> empty() {
-        return new MParser<>((ignore) -> List.of());
+        return new MParser<>((ignore) -> MList.empty());
     }
 
     public static <S, T> MParser<S, MList<T>> accumulating(MList<MParser<S, T>> parsers) {
-        return parsers.foldr((val, acc) -> val.then((v,l) -> l.append(v), acc), new MParser<>(new MList<>()));
+        return parsers.foldr((val, acc) -> val.then((v, l) -> l.append(v), acc), new MParser<>(new MList<>()));
     }
 
 
     @Override
     public <R> MParser<S, R> bind(Function<T, Monad<MParser<S, ?>, R>> f) {
         return new MParser<>(input ->
-                parse(input).stream()
-                        .map(result ->
+                parse(input)
+                        .bind(result ->
                                 unwrap(f.apply(result.value))
-                                        .parse(result.remainingTokens))
-                        .flatMap(List::stream)
-                        .toList());
+                                        .parse(result.remainingTokens)));
     }
 
     @Override
@@ -106,7 +101,7 @@ public class MParser<S, T> implements Monad<MParser<S, ?>, T>, Alternative<MPars
      *
      * @return a {@link ParseResult}
      */
-    public List<ParseResult<S, T>> parse(List<S> tokens) {
+    public MList<ParseResult<S, T>> parse(MList<S> tokens) {
         return parse.apply(tokens);
     }
 
@@ -121,12 +116,8 @@ public class MParser<S, T> implements Monad<MParser<S, ?>, T>, Alternative<MPars
      * @return joined results of both parsers.
      */
     public MParser<S, T> plus(MParser<S, T> other) {
-        return new MParser<>(input -> {
-            List<ParseResult<S, T>> result = new ArrayList<>();
-            result.addAll(parse(input));
-            result.addAll(other.parse(input));
-            return result;
-        });
+        return new MParser<>(input ->
+                parse(input).mplus(other.parse(input)));
     }
 
     /**
@@ -137,7 +128,7 @@ public class MParser<S, T> implements Monad<MParser<S, ?>, T>, Alternative<MPars
      */
     public MParser<S, T> either(MParser<S, T> other) {
         return new MParser<>(input -> {
-            List<ParseResult<S, T>> result = parse(input);
+            MList<ParseResult<S, T>> result = parse(input);
             if (result.isEmpty()) {
                 return other.parse(input);
             } else {
@@ -160,9 +151,9 @@ public class MParser<S, T> implements Monad<MParser<S, ?>, T>, Alternative<MPars
 
     public MParser<S, MList<T>> some2() {
         return new MParser<>(input -> {
-            List<ParseResult<S, MList<T>>> result = many2().parse(input);
+            MList<ParseResult<S, MList<T>>> result = many2().parse(input);
             if (result.isEmpty()) {
-                return List.of(new ParseResult<>(new MList<>(), input));
+                return new MList<>(new ParseResult<>(new MList<>(), input));
             }
             return result;
         });
@@ -180,13 +171,13 @@ public class MParser<S, T> implements Monad<MParser<S, ?>, T>, Alternative<MPars
      * @return A parser which definitely parses the same as this parser but might parse using other afterward.
      */
     public <A> MParser<S, T> maybe(BiFunction<T, A, T> combine, MParser<S, A> other) {
-        return new MParser<>((List<S> input) ->
-                parse(input).stream().flatMap(outer -> {
-                            List<ParseResult<S, A>> results = other.parse(outer.remainingTokens);
-                            return results.isEmpty() ? Stream.of(outer) : results.stream().map(inner ->
+        return new MParser<>((MList<S> input) ->
+                parse(input).bind(outer -> {
+                            MList<ParseResult<S, A>> results = other.parse(outer.remainingTokens);
+                            return results.isEmpty() ? new MList<>(outer) : results.map(inner ->
                                     new ParseResult<>(combine.apply(outer.value, inner.value), inner.remainingTokens));
                         }
-                ).toList()
+                )
         );
     }
 
@@ -195,8 +186,8 @@ public class MParser<S, T> implements Monad<MParser<S, ?>, T>, Alternative<MPars
      */
     public MParser<S, Maybe<T>> maybeMParser() {
         return new MParser<>(input -> {
-            List<ParseResult<S, Maybe<T>>> results = map(Maybe::new).parse(input);
-            return results.isEmpty() ? List.of(new ParseResult<>(Maybe.nothing(), input)) : results;
+            MList<ParseResult<S, Maybe<T>>> results = map(Maybe::new).parse(input);
+            return results.isEmpty() ? new MList<>(new ParseResult<>(Maybe.nothing(), input)) : results;
         });
     }
 
@@ -228,6 +219,6 @@ public class MParser<S, T> implements Monad<MParser<S, ?>, T>, Alternative<MPars
      * @param <S>             the type of the tokens.
      * @param <T>             the type of the result.
      */
-    public record ParseResult<S, T>(T value, List<S> remainingTokens) {
+    public record ParseResult<S, T>(T value, MList<S> remainingTokens) {
     }
 }

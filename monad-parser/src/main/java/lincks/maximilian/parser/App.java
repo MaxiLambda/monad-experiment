@@ -1,5 +1,6 @@
 package lincks.maximilian.parser;
 
+import lincks.maximilian.impl.monad.MList;
 import lincks.maximilian.parser.custom.InfixOp;
 import lincks.maximilian.parser.custom.PrefixOp;
 import lincks.maximilian.parser.parser.ast.Context;
@@ -9,7 +10,6 @@ import lincks.maximilian.parser.parser.ast.ValueLiteral;
 import lincks.maximilian.parser.token.OperatorToken;
 import lincks.maximilian.parser.token.Symbol;
 
-import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -44,7 +44,7 @@ public class App {
         Symbol plusS = new Symbol("+");
         Symbol starS = new Symbol("*");
 
-        Lexer lexer = new Lexer(List.of(exclamationS, atS, percentS, questionS, plusS, starS));
+        Lexer lexer = new Lexer(new MList<>(exclamationS, atS, percentS, questionS, plusS, starS));
 
         //custom Operations
         PrefixOp<Integer> operator1 = new PrefixOp<>(exclamationS, 1, 0);
@@ -94,13 +94,13 @@ public class App {
                     var xs = l.map(fromLiteral);
                     var x = xs.head();
                     var y = xs.tail().head();
-                    return new ValueLiteral<>(x+y);
+                    return new ValueLiteral<>(x + y);
                 },
                 starS, l -> {
                     var xs = l.map(fromLiteral);
                     var x = xs.head();
                     var y = xs.tail().head();
-                    return new ValueLiteral<>(x*y);
+                    return new ValueLiteral<>(x * y);
                 }
         ));
 

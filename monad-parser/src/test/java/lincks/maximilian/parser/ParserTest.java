@@ -25,7 +25,7 @@ class ParserTest {
     Symbol symbol5 = new Symbol("+");
     Symbol symbol6 = new Symbol("*");
 
-    Lexer lexer = new Lexer(List.of(symbol1, symbol2, symbol3, symbol4, symbol5, symbol6));
+    Lexer lexer = new Lexer(new MList<>(symbol1, symbol2, symbol3, symbol4, symbol5, symbol6));
 
     //custom Operations
     PrefixOp<Integer> operator1 = new PrefixOp<>(symbol1, 1, 0);

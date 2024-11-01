@@ -1,24 +1,22 @@
 package lincks.maximilian.parser;
 
+import lincks.maximilian.impl.monad.MList;
 import lincks.maximilian.parser.token.Symbol;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-import java.util.stream.Stream;
-
-import static lincks.maximilian.impl.monad.MList.toMList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class LexerTest {
 
     @Test
     void run() {
-        Lexer lexer = new Lexer(Stream.of("*", "+", "->", "-").map(Symbol::new).toList());
+        Lexer lexer = new Lexer(new MList<>("*", "+", "->", "-").map(Symbol::new));
 
         String input = "->)2;(3;*4;-->4;";
         var res = lexer.getSymbols(input);
-        assertEquals(List.of(Stream.of(
+
+        assertEquals(new MList<>(
                 "->", ")", "2", "(", "3", "*", "4", "-", "->", "4"
-        ).map(Symbol::new).collect(toMList())), res);
+        ).map(Symbol::new), res);
     }
 }

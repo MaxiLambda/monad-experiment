@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.function.Function;
 
+import static lincks.maximilian.impl.monad.MList.toMList;
 import static lincks.maximilian.impl.monad.MParser.tokenMatching;
 import static lincks.maximilian.impl.monad.MParser.unwrap;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -20,9 +21,9 @@ class MParserTest {
                             (acc, chrParser) -> acc.then((strR, chrR) -> strR + chrR, chrParser),
                             (l, r) -> l.then(String::concat, r));
 
-    List<Character> chars = "hallo".chars().mapToObj(i -> (char) i).toList();
-    List<Character> chars2 = "hhhoh".chars().mapToObj(i -> (char) i).toList();
-    List<Character> chars3 = "hoh".chars().mapToObj(i -> (char) i).toList();
+    MList<Character> chars = "hallo".chars().mapToObj(i -> (char) i).collect(toMList());
+    MList<Character> chars2 = "hhhoh".chars().mapToObj(i -> (char) i).collect(toMList());
+    MList<Character> chars3 = "hoh".chars().mapToObj(i -> (char) i).collect(toMList());
 
     //many does not work atm. therefore use many2
     @Test
@@ -38,8 +39,8 @@ class MParserTest {
         System.out.println(results);
 
 
-        var result = results.getFirst();
-        assertEquals(List.of('o', 'h'), result.remainingTokens());
+        var result = results.head();
+        assertEquals(new MList<>('o', 'h'), result.remainingTokens());
         assertEquals('h', result.value());
     }
 
@@ -57,22 +58,22 @@ class MParserTest {
         MParser<Character, Integer> addParser = numParser.then((i, op) -> i, MParser.tokenMatching('+')).then(Integer::sum, numParser);
 
 
-        var res = addParser.parse("14+7".chars().mapToObj(i -> (char) i).toList());
-        assertEquals(21, res.getFirst().value());
+        var res = addParser.parse("14+7".chars().mapToObj(i -> (char) i).collect(toMList()));
+        assertEquals(21, res.head().value());
     }
 
     @Test
     void parseMultipleTokens() {
         var results = exact.apply('h')
                 .then(
-                        List::of,
+                        MList::new,
                         exact.apply('o'))
                 .parse(chars3);
         assertEquals(1, results.size());
 
-        var result = results.getFirst();
-        assertEquals(List.of('h'), result.remainingTokens());
-        assertEquals(List.of('h', 'o'), result.value());
+        var result = results.head();
+        assertEquals(new MList<>('h'), result.remainingTokens());
+        assertEquals(new MList<>('h', 'o'), result.value());
         System.out.println(result);
     }
 
@@ -81,9 +82,9 @@ class MParserTest {
         var results = exact.apply('h').many2().parse(chars2);
         assertEquals(1, results.size());
 
-        var result = results.getFirst();
-        assertEquals(List.of('o', 'h'), result.remainingTokens());
-        assertEquals(List.of('h', 'h', 'h'), result.value());
+        var result = results.head();
+        assertEquals(new MList<>('o', 'h'), result.remainingTokens());
+        assertEquals(new MList<>('h', 'h', 'h'), result.value());
     }
 
     @Test
@@ -94,9 +95,9 @@ class MParserTest {
                 .parse(chars3);
         assertEquals(1, results.size());
 
-        var result = results.getFirst();
-        assertEquals(List.of(), result.remainingTokens());
-        assertEquals(List.of('h', 'o', 'h'), result.value());
+        var result = results.head();
+        assertEquals(new MList<>(), result.remainingTokens());
+        assertEquals(new MList<>('h', 'o', 'h'), result.value());
     }
 
     @Test
@@ -107,7 +108,7 @@ class MParserTest {
 
     @Test
     void failParseEmpty() {
-        var results = exact.apply('i').parse(List.of());
+        var results = exact.apply('i').parse(new MList<>());
         assertEquals(0, results.size());
     }
 
@@ -116,30 +117,30 @@ class MParserTest {
         var results = string.apply("hallo").parse(chars);
         assertEquals(1, results.size());
 
-        var result = results.getFirst();
-        assertEquals(List.of(), result.remainingTokens());
+        var result = results.head();
+        assertEquals(new MList<>(), result.remainingTokens());
         assertEquals("hallo", result.value());
     }
 
     @Test
     void nWay() {
-        var x = MParser.tokenMatching('a').map(MList::new).plus(MParser.tokenMatching('a').many2()).parse(List.of('a', 'a'));
+        var x = MParser.tokenMatching('a').map(MList::new).plus(MParser.tokenMatching('a').many2()).parse(new MList<>('a', 'a'));
         assertEquals(2, x.size());
     }
 
     @Test
     void someTest() {
-        var r1 = MParser.tokenMatching("a").some2().then((a, b) -> a.mplus(new MList<>(b)), tokenMatching("b")).parse(List.of("b"));
-        var r2 = MParser.tokenMatching("a").some2().then((a, b) -> a.mplus(new MList<>(b)), tokenMatching("b")).parse(List.of("a", "a", "b"));
+        var r1 = MParser.tokenMatching("a").some2().then((a, b) -> a.mplus(new MList<>(b)), tokenMatching("b")).parse(new MList<>("b"));
+        var r2 = MParser.tokenMatching("a").some2().then((a, b) -> a.mplus(new MList<>(b)), tokenMatching("b")).parse(new MList<>("a", "a", "b"));
 
-        assertEquals(List.of(), r1.getFirst().remainingTokens());
-        assertEquals(List.of(), r2.getFirst().remainingTokens());
+        assertEquals(new MList<>(), r1.head().remainingTokens());
+        assertEquals(new MList<>(), r2.head().remainingTokens());
 
     }
 
     @Test
     void empty() {
-        var x = MParser.empty().then( (ignore, a) -> a,tokenMatching("a")).parse(List.of("a"));
+        var x = MParser.empty().then( (ignore, a) -> a,tokenMatching("a")).parse(new MList<>("a"));
         System.out.println(x);
     }
 }

@@ -5,8 +5,6 @@ import lincks.maximilian.impl.monad.MParser;
 import lincks.maximilian.parser.token.Symbol;
 import lombok.RequiredArgsConstructor;
 
-import java.util.List;
-
 import static java.util.function.Predicate.not;
 import static lincks.maximilian.impl.monad.MList.toMList;
 import static lincks.maximilian.parser.token.SyntaxToken.L_BRACE;
@@ -14,8 +12,8 @@ import static lincks.maximilian.parser.token.SyntaxToken.R_BRACE;
 
 @RequiredArgsConstructor
 public class Lexer {
-    private final static List<Symbol> braceSymbols = List.of(L_BRACE.getSymbol(), R_BRACE.getSymbol());
-    private final List<Symbol> operatorSymbols;
+    private final static MList<Symbol> braceSymbols = new MList<>(L_BRACE.getSymbol(), R_BRACE.getSymbol());
+    private final MList<Symbol> operatorSymbols;
 
     public MList<Symbol> getSymbols(String input) {
 
@@ -36,16 +34,15 @@ public class Lexer {
                         .foldr(MParser::either, MParser.<Character, Symbol>empty())
                         .many2();
 
-        return symbolParser.parse(cleanedInput.chars().mapToObj(c -> (char) c).toList())
-                .stream()
+        return symbolParser.parse(cleanedInput.chars().mapToObj(c -> (char) c).collect(toMList()))
                 .filter(r -> r.remainingTokens().isEmpty())
                 .map(MParser.ParseResult::value)
                 .toList()
                 .getFirst();
     }
 
-    private MList<MParser<Character, Symbol>> fromSymbols(List<Symbol> symbols) {
-        return symbols.stream()
+    private MList<MParser<Character, Symbol>> fromSymbols(MList<Symbol> symbols) {
+        return symbols
                 .map(s -> MParser.accumulating(
                                 s.symbol()
                                         .chars()
@@ -54,8 +51,7 @@ public class Lexer {
                                         .collect(toMList())
 
                         ).map(list -> list.foldr((val, acc) -> acc + val, ""))
-                        .map(Symbol::new))
-                .collect(toMList());
+                        .map(Symbol::new));
     }
 
 }
