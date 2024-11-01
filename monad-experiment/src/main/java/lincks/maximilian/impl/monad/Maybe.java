@@ -31,7 +31,7 @@ public class Maybe<T> implements MonadPlus<Maybe<?>, T>, MonadZero<Maybe<?>, T> 
     /**
      * Constructor used to create empty instances of Maybe with {@link MonadZero#zero(Class)}.
      *
-     * @return the {@link #nothing()} value of 'Maybe'.
+     * @return the 'nothing' value of 'Maybe'.
      */
     @MZero
     public static <R> Maybe<R> nothing() {
@@ -43,6 +43,10 @@ public class Maybe<T> implements MonadPlus<Maybe<?>, T>, MonadZero<Maybe<?>, T> 
      */
     public static <T> Maybe<T> unwrap(Bottom<Maybe<?>, T> m) {
         return (Maybe<T>) m;
+    }
+
+    public static <T> Maybe<T> fromNullable(T value) {
+        return value == null ? nothing() : new Maybe<>(value);
     }
 
     /**
@@ -63,6 +67,13 @@ public class Maybe<T> implements MonadPlus<Maybe<?>, T>, MonadZero<Maybe<?>, T> 
     public T get() {
         //defining a throwing version could be helpful
         return value;
+    }
+
+    public T otherwise(T value){
+        return isNothing() ? value : this.value;
+    }
+    public T otherwise(Supplier<T> value){
+        return isNothing() ? value.get() : this.value;
     }
 
     @Override

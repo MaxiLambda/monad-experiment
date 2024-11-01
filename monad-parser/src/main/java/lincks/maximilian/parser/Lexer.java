@@ -14,11 +14,10 @@ import static lincks.maximilian.parser.token.SyntaxToken.R_BRACE;
 
 @RequiredArgsConstructor
 public class Lexer {
-    private final List<Symbol> operatorSymbols;
     private final static List<Symbol> braceSymbols = List.of(L_BRACE.getSymbol(), R_BRACE.getSymbol());
+    private final List<Symbol> operatorSymbols;
 
-
-    public List<MList<Symbol>> getSymbols(String input) {
+    public MList<Symbol> getSymbols(String input) {
 
         String cleanedInput = input.replaceAll("\\s", "");
 
@@ -41,7 +40,8 @@ public class Lexer {
                 .stream()
                 .filter(r -> r.remainingTokens().isEmpty())
                 .map(MParser.ParseResult::value)
-                .toList();
+                .toList()
+                .getFirst();
     }
 
     private MList<MParser<Character, Symbol>> fromSymbols(List<Symbol> symbols) {

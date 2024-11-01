@@ -91,9 +91,9 @@ public class MList<T> implements MonadPlus<MList<?>, T>, Traversable<MList<?>, T
     @Override
     public <R> R foldr(BiFunction<T, R, R> acc, R identity) {
         AtomicReference<R> r = new AtomicReference<>(identity);
-        list.reversed().forEach(val -> {
-            r.set(acc.apply(val, r.get()));
-        });
+        list.reversed().forEach(val ->
+                r.set(acc.apply(val, r.get()))
+        );
         return r.get();
     }
 
@@ -194,5 +194,13 @@ public class MList<T> implements MonadPlus<MList<?>, T>, Traversable<MList<?>, T
 
     public static <T> Collector<T, ?, MList<T>> toMList() {
         return Collectors.collectingAndThen(Collectors.toList(), MList::fromList);
+    }
+
+    public int size() {
+        return list.size();
+    }
+
+    public boolean isEmpty() {
+        return list.isEmpty();
     }
 }
