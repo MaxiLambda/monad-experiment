@@ -1,6 +1,6 @@
 package lincks.maximilian.impl.monad;
 
-import lincks.maximilian.monadzero.MonadZero;
+import lincks.maximilian.monadzero.Zero;
 import lincks.maximilian.traversable.Traversable;
 import lincks.maximilian.util.BBF;
 import lincks.maximilian.util.BF;
@@ -10,7 +10,6 @@ import java.util.function.Predicate;
 
 import static lincks.maximilian.impl.monad.MList.unwrap;
 import static lincks.maximilian.monads.Monad.join;
-import static lincks.maximilian.monadzero.MonadZero.filterM;
 import static lincks.maximilian.util.func.F.curry;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -41,8 +40,8 @@ public class MListTest {
 
     @Test
     void testZero() {
-        assertEquals(MonadZero.zero(MList.class), MList.empty());
-        assertEquals(MonadZero.zero(MList.class).mplus(new MList<>(1)), new MList<>(1));
+        assertEquals(Zero.zero(MList.class), MList.empty());
+        assertEquals(Zero.zero(MList.class).mplus(new MList<>(1)), new MList<>(1));
     }
 
     @Test
@@ -83,10 +82,10 @@ public class MListTest {
     }
 
     @Test
-    void filterVsFilterM() {
+    void filterVsFilter() {
         MList<Integer> list1 = new MList<>(1,2,3,4);
         Predicate<Integer> p = i -> i % 2 == 0;
        assertEquals(new MList<>(2,4),list1.filter(p));
-       assertEquals(new MList<>(2,4),filterM(p,list1));
+       assertEquals(new MList<>(2,4),list1.filter(p));
     }
 }

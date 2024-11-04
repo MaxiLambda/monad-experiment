@@ -1,7 +1,7 @@
 package lincks.maximilian.alternative;
 
 import lincks.maximilian.applicative.Applicative;
-import lincks.maximilian.monadzero.MonadZero;
+import lincks.maximilian.monadzero.Zero;
 
 import java.util.function.Supplier;
 
@@ -11,7 +11,7 @@ import java.util.function.Supplier;
  * @param <A> type of the Applicative
  * @param <T> wrapped type
  */
-public interface Alternative<A extends Alternative<A, ?> & Applicative<A, ?>, T> extends Applicative<A, T>, MonadZero<A, T> {
+public interface Alternative<A extends Alternative<A, ?>, T> extends Applicative<A, T>, Zero<A, T> {
     //zero from MonadZero is re-used as "empty"
 
     /**

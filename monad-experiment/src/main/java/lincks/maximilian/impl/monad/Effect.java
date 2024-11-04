@@ -4,19 +4,23 @@ import lincks.maximilian.alternative.Alternative;
 import lincks.maximilian.applicative.ApplicativeConstructor;
 import lincks.maximilian.monads.Monad;
 import lincks.maximilian.monadzero.MZero;
+import lincks.maximilian.monadzero.MonadZero;
 import lincks.maximilian.util.Bottom;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
+
+import static lincks.maximilian.monads.MonadPure.pure;
 
 /**
  * Describes a lazy Effect which might fail.
  * The Effect is evaluated if the result is requested by {@link #get()} or when the effect is forced with {@link #evaluate()}.
  * TODO Lazy, even on alternative, maybe implement non-lazy version (on alternative)
  */
-public interface Effect<T> extends Monad<Effect<?>, T>, Alternative<Effect<?>, T> {
+public interface Effect<T> extends MonadZero<Effect<?>, T>, Alternative<Effect<?>, T> {
 
     Effect<?> error = new SupplierEffect<>(() -> null);
 
@@ -89,6 +93,26 @@ public interface Effect<T> extends Monad<Effect<?>, T>, Alternative<Effect<?>, T
         return this == error;
     }
 
+    @Override
+    default <R> Effect<R> map(Function<T, R> f) {
+        //this is not reimplemented with the unwrap pattern because the compiler won't accept it...
+        return this.bind(f.andThen(SupplierEffect::new));
+    }
+
+    @Override
+    default <R> Effect<R> then(Supplier<Monad<Effect<?>, R>> f) {
+        //this is not reimplemented with the unwrap pattern because the compiler won't accept it...
+        return bind((T ignore) -> f.get());
+    }
+
+    @Override
+    default Effect<T> filter(Predicate<T> p) {
+        return unwrap(MonadZero.super.filter(p));
+    }
+
+    @Override
+    <R> Effect<R> bind(Function<T, Monad<Effect<?>, R>> f);
+
     /**
      * Returns a new Effect with the effect of this Effect or another effect.
      * If {@link #isError()} is true, other is returned. Otherwise, the new Effect will try to run this effect and only
@@ -119,6 +143,16 @@ public interface Effect<T> extends Monad<Effect<?>, T>, Alternative<Effect<?>, T
      * @return the value of this effect.
      */
     T get();
+
+    default T getOnError(T value){
+        Effect<T> evaluated = then(this::evaluate);
+        while (evaluated instanceof DelegatingEffect<T> s) {
+            evaluated = s.evaluate();
+        }
+        //evaluation is necessary to prevent exceptions
+        return evaluated.isError() ? value : evaluated.get();
+    }
+
 
     /**
      * Forces the evaluation of this and returns a new Effect.
@@ -191,7 +225,7 @@ public interface Effect<T> extends Monad<Effect<?>, T>, Alternative<Effect<?>, T
         public <R> Effect<R> bind(Function<T, Monad<Effect<?>, R>> f) {
             return isError() ? error() : new DelegatingEffect<>(() -> {
                 SupplierEffect<T> effect = evaluate();
-                return unwrap(f.apply(effect.get()));
+                return effect.isError() ? Effect.error() : unwrap(f.apply(effect.get()));
             });
         }
     }

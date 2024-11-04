@@ -9,6 +9,8 @@ import lincks.maximilian.util.Bottom;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import static lincks.maximilian.util.func.F.constant;
+
 /**
  * Monad describing values which might be missing, but a default or a reason is provided.
  */
@@ -25,6 +27,10 @@ public sealed interface Either<F, T> extends Monad<Either<F, ?>, T>, Alternative
         return (Either<F, T>) m;
     }
 
+    static <F,T> Either<F, T> fromEffect(Effect<T> effect, F failure) {
+        return effect.<Either<F,T>>map(Either.Right::new).getOnError(new Either.Left<>(failure));
+    }
+
     @Override
     default <R> Either<F, R> bind(Function<T, Monad<Either<F, ?>, R>> f) {
         return switch (this) {
@@ -35,12 +41,12 @@ public sealed interface Either<F, T> extends Monad<Either<F, ?>, T>, Alternative
 
     @Override
     default <R> Either<F, R> map(Function<T, R> f) {
-        return unwrap(Monad.super.map(f));
+        return bind(f.andThen(Either.Right::new));
     }
 
     @Override
     default <R> Either<F, R> then(Supplier<Monad<Either<F, ?>, R>> f) {
-        return unwrap(Monad.super.then(f));
+        return bind(constant(f));
     }
 
     @Override
@@ -49,6 +55,22 @@ public sealed interface Either<F, T> extends Monad<Either<F, ?>, T>, Alternative
             case Left(F ignored) -> unwrap(other.get());
             case Right(T ignored) -> this;
         };
+    }
+
+    default boolean isLeft() {
+        return false;
+    }
+
+    default boolean isRight() {
+        return false;
+    }
+
+    default Left<F,T> asLeft() {
+        throw new UnsupportedOperationException();
+    }
+
+    default Right<F,T> asRight() {
+        throw new UnsupportedOperationException();
     }
 
     /**
@@ -60,6 +82,16 @@ public sealed interface Either<F, T> extends Monad<Either<F, ?>, T>, Alternative
         @ApplicativeConstructor
         public Right {
         }
+
+        @Override
+        public boolean isRight() {
+            return true;
+        }
+
+        @Override
+        public Right<F, T> asRight() {
+            return this;
+        }
     }
 
     /**
@@ -68,5 +100,14 @@ public sealed interface Either<F, T> extends Monad<Either<F, ?>, T>, Alternative
      * @param value the value
      */
     record Left<F, T>(F value) implements Either<F, T> {
+        @Override
+        public Left<F, T> asLeft() {
+            return this;
+        }
+
+        @Override
+        public boolean isLeft() {
+            return true;
+        }
     }
 }

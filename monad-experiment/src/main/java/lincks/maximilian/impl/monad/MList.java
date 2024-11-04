@@ -4,9 +4,11 @@ import lincks.maximilian.alternative.Alternative;
 import lincks.maximilian.applicative.Applicative;
 import lincks.maximilian.applicative.ApplicativeConstructor;
 import lincks.maximilian.monadplus.MonadPlus;
+import lincks.maximilian.monadpluszero.MonadPlusZero;
 import lincks.maximilian.monads.Monad;
 import lincks.maximilian.monadzero.MZero;
 import lincks.maximilian.monadzero.MonadZero;
+import lincks.maximilian.monadzero.Zero;
 import lincks.maximilian.traversable.Traversable;
 import lincks.maximilian.util.BF;
 import lincks.maximilian.util.Bottom;
@@ -34,7 +36,7 @@ import static lincks.maximilian.applicative.ApplicativePure.pureUnsafeClass;
  */
 @ToString
 @EqualsAndHashCode
-public class MList<T> implements MonadPlus<MList<?>, T>, Traversable<MList<?>, T>, Alternative<MList<?>, T> {
+public class MList<T> implements MonadPlus<MList<?>, T>, Traversable<MList<?>, T>, Alternative<MList<?>, T>, MonadZero<MList<?>,T> {
     //Create LazyList implementation => can be created from suppliers and is only evaluated on request
     //evaluated values must be preserved => two lists needed internally
     //map, bind etc. create new Lists
@@ -61,7 +63,7 @@ public class MList<T> implements MonadPlus<MList<?>, T>, Traversable<MList<?>, T
     }
 
     /**
-     * static function used to create new MLists with {@link MonadZero#zero(Class)}
+     * static function used to create new MLists with {@link Zero#zero(Class)}
      */
     @MZero
     public static <T> MList<T> empty() {
@@ -188,6 +190,7 @@ public class MList<T> implements MonadPlus<MList<?>, T>, Traversable<MList<?>, T
      * @param p the predicate
      * @return a new MList only with values that satisfy p.
      */
+    @Override
     public MList<T> filter(Predicate<T> p) {
         return new MList<>(list.stream().filter(p).toList());
     }

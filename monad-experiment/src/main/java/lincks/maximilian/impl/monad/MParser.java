@@ -4,6 +4,7 @@ import lincks.maximilian.alternative.Alternative;
 import lincks.maximilian.applicative.ApplicativeConstructor;
 import lincks.maximilian.monads.Monad;
 import lincks.maximilian.monadzero.MZero;
+import lincks.maximilian.monadzero.Zero;
 import lincks.maximilian.util.Bottom;
 import lombok.ToString;
 
@@ -11,6 +12,8 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+
+import static lincks.maximilian.util.func.F.constant;
 
 
 /**
@@ -65,11 +68,11 @@ public class MParser<S, T> implements Monad<MParser<S, ?>, T>, Alternative<MPars
     }
 
     /**
-     * Create an empty parser. used with {@link lincks.maximilian.monadzero.MonadZero#zero(Class)}
+     * Create an empty parser. used with {@link Zero#zero(Class)}
      */
     @MZero
     public static <S, T> MParser<S, T> empty() {
-        return new MParser<>((ignore) -> MList.empty());
+        return new MParser<>(constant(MList::empty));
     }
 
     public static <S, T> MParser<S, MList<T>> accumulating(MList<MParser<S, T>> parsers) {

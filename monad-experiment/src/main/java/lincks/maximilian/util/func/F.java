@@ -27,4 +27,20 @@ public final class F {
     public static <A, B, C> BiFunction<B, A, C> reverse(BiFunction<A, B, C> f) {
         return (B b, A a) -> f.apply(a, b);
     }
+
+    public static <T,R> Function<T,R> constant(R r) {
+        return ignore -> r;
+    }
+
+    public static <I,R> Function<I,R> constant(Supplier<R> r) {
+        return ignore -> r.get();
+    }
+
+    public static <I,T,R> BiFunction<I,T,R> constant(Function<T,R> r) {
+        return (ignore, t) -> r.apply(t);
+    }
+
+    public static <A,B,C> BiFunction<B,A,C> flip(BiFunction<A, B, C> f) {
+        return (b,a) -> f.apply(a, b);
+    }
 }

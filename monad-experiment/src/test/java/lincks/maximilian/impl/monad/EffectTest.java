@@ -34,7 +34,7 @@ public class EffectTest {
         AtomicInteger count = new AtomicInteger(0);
         var e = Effect.of(1);
 
-        e = unwrap(e.bind((ignore) -> Effect.fromSupplier(() -> {
+        e = unwrap(e.then(() -> Effect.fromSupplier(() -> {
             throw new RuntimeException();
         })));
 

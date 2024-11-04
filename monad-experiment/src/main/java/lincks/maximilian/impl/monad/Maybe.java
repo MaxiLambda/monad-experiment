@@ -6,6 +6,7 @@ import lincks.maximilian.monadplus.MonadPlus;
 import lincks.maximilian.monads.Monad;
 import lincks.maximilian.monadzero.MZero;
 import lincks.maximilian.monadzero.MonadZero;
+import lincks.maximilian.monadzero.Zero;
 import lincks.maximilian.util.Bottom;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -29,7 +30,7 @@ public class Maybe<T> implements MonadPlus<Maybe<?>, T>, MonadZero<Maybe<?>, T> 
     }
 
     /**
-     * Constructor used to create empty instances of Maybe with {@link MonadZero#zero(Class)}.
+     * Constructor used to create empty instances of Maybe with {@link Zero#zero(Class)}.
      *
      * @return the 'nothing' value of 'Maybe'.
      */

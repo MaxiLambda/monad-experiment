@@ -3,7 +3,7 @@ package lincks.maximilian.foldable;
 import lincks.maximilian.alternative.Alternative;
 import lincks.maximilian.monadplus.MonadPlus;
 import lincks.maximilian.monadpluszero.MonadPlusZero;
-import lincks.maximilian.monadzero.MonadZero;
+import lincks.maximilian.monadzero.Zero;
 import lincks.maximilian.util.BBF;
 import lincks.maximilian.util.BF;
 import lincks.maximilian.util.Bottom;
@@ -12,7 +12,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static lincks.maximilian.monadzero.MonadZero.zero;
+import static lincks.maximilian.monadzero.Zero.zero;
 
 /**
  * Represents a collection of values that can be reduced to a single value.
@@ -35,15 +35,15 @@ public interface Foldable<F extends Foldable<F, ?>, T> extends Bottom<F, T> {
 
     /**
      * Same as {@link #foldr(BiFunction, Object)} but we don't need to provide an identity, if our folding function
-     * returns instances of {@link MonadZero}. {@link MonadZero#zero(Class)} is called with the class implementing MonadZero.
+     * returns instances of {@link Zero}. {@link Zero#zero(Class)} is called with the class implementing MonadZero.
      *
      * @param acc  the function used to accumulate results.
      * @param <MZ> the type of the MonadZero implementation we are mapping towards
      * @param <R>  the type of the result
      * @return the result of successively applying acc to all values in this
      */
-    default <MZ extends MonadZero<MZ, ?>, R> MonadZero<MZ, R> foldr(BBF<T, ? extends MonadZero<MZ, R>, R, MZ> acc) {
-        return foldr((BiFunction<T, MonadZero<MZ, R>, MonadZero<MZ, R>>) acc.getFunction(), (MonadZero<MZ, R>) zero(acc.getType()));
+    default <MZ extends Zero<MZ, ?>, R> Zero<MZ, R> foldr(BBF<T, ? extends Zero<MZ, R>, R, MZ> acc) {
+        return foldr((BiFunction<T, Zero<MZ, R>, Zero<MZ, R>>) acc.getFunction(), (Zero<MZ, R>) zero(acc.getType()));
     }
 
     //with Monoid instead of MonadPlusZero/Alternative, foldMap would be more powerful

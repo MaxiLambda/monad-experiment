@@ -30,7 +30,7 @@ class EitherTest {
     void useRightLeft() {
         Either<String, Integer> m =new Either.Right<String, Integer>(1)
                 .map(i -> i +1)
-                .bind(ignore -> new Either.Left<>("oh no"));
+                .then(() -> new Either.Left<>("oh no"));
 
         assertInstanceOf(Either.Left.class, m);
         Either.Left<String, Integer> left = (Either.Left<String, Integer>) m;

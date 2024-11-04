@@ -41,7 +41,7 @@ public class Parser<T> {
 
     public AstExpression<T> run(String input) {
         Deque<Symbol> symbols = new ArrayDeque<>(lexer.getSymbols(input).toList());
-
+        System.out.println(symbols);
         //translate Symbols into expressions with the parsing-table from the readme
         //if a symbol is not in operators.values(), L_BRACE.getSymbol() or R_BRACE.getSymbol() it has to be a Literal
         return generateAst(INITIAL_PRODUCTION.apply(operatorStrength::get), symbols);

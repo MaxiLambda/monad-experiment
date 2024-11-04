@@ -1,5 +1,7 @@
 package lincks.maximilian.parser;
 
+import lincks.maximilian.impl.monad.Effect;
+import lincks.maximilian.impl.monad.Either;
 import lincks.maximilian.impl.monad.MList;
 import lincks.maximilian.parser.custom.InfixOp;
 import lincks.maximilian.parser.custom.PrefixOp;
@@ -11,6 +13,7 @@ import lincks.maximilian.parser.token.OperatorToken;
 import lincks.maximilian.parser.token.Symbol;
 import org.junit.jupiter.api.Test;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -148,40 +151,80 @@ class InterpreterTest {
 
     @Test
     void customLangTest() {
-        Symbol concat = new Symbol(",");
 
-        Lexer lexer = new Lexer(new MList<>(concat));
+        record Scope(Map<Symbol, Integer> scope, Either<Symbol, Integer> value){}
+
+        Symbol concat = new Symbol(",");
+        Symbol storeVal = new Symbol("@");
+        Symbol getVal = new Symbol("!");
+
+        var xxx = new MList<>(concat, storeVal, getVal);
+        System.out.println(xxx);
+        Lexer lexer = new Lexer(xxx);
 
         //custom Operations
-        InfixOp<String> operator1 = new InfixOp<>(concat, 0);
+        InfixOp<Scope> operator1 = new InfixOp<>(concat, 0);
+        PrefixOp<Scope> operator2 = new PrefixOp<>(storeVal, 2, 1);
+        PrefixOp<Scope> operator3 = new PrefixOp<>(getVal, 1, 2);
 
-        Map<Symbol, OperatorToken<String>> operators = Stream.of(operator1)
+        Map<Symbol, OperatorToken<Scope>> operators = Stream.of(operator1,operator2,operator3)
                 .collect(toMap(OperatorToken::getSymbol, Function.identity()));
 
-        Parser<String> parser = new Parser<>(lexer, operators);
-
-        Function<Literal<String>, String> fromLiteral = l -> {
+        Parser<Scope> parser = new Parser<>(lexer, operators);
+        Function<Literal<Scope>, Scope> fromLiteral = l -> {
             switch (l) {
-                case SymbolLiteral<String> v -> {
-                    return v.getSymbol().symbol();
+                case SymbolLiteral<Scope> v -> {
+                    return new Scope(Map.of(), Either.fromEffect(
+                            Effect.fromSupplier(() -> Integer.parseInt(v.getSymbol().symbol())), v.getSymbol()));
                 }
-                case ValueLiteral<String> v -> {
+                case ValueLiteral<Scope> v -> {
                     return v.getValue();
                 }
             }
         };
 
-        Context<String> context = new Context<>(Map.of(
+        Context<Scope> context = new Context<>(Map.of(
                 concat, l -> {
-                    System.out.println(l);
-                    var xs = l.map(fromLiteral);
-                    var x = xs.head();
-                    var y = xs.tail().head();
-                    System.out.println(x + "-" + y);
-                    return new ValueLiteral<>(x + "-" + y);
+                    var xss = l.map(fromLiteral);
+                    var xs = xss.head();
+
+                    //literal
+                    var x = xss.tail().head();
+
+                    var newScope = new HashMap<>(xs.scope);
+                    newScope.putAll(x.scope);
+
+                    Either<Symbol, Integer> value = switch (x.value){
+                        case Either.Left<Symbol, Integer> left -> new Either.Right<>(newScope.get(left.value()));
+                        case Either.Right<Symbol, Integer> right -> right;
+                    };
+
+
+                    return new ValueLiteral<>(new Scope(newScope, value));
+                },
+                storeVal, l -> {
+                    var xss = l.map(fromLiteral);
+                    var variable = xss.head();
+                    var value = xss.tail().head();
+
+                    var newScope = new HashMap<>(variable.scope);
+                    newScope.putAll(value.scope);
+                    //is asLeft or asRight fails things were bad anyways
+                    newScope.put(variable.value().asLeft().value(), value.value.asRight().value());
+                    return new ValueLiteral<>(new Scope(newScope, value.value));
                 }
+//                ,
+//                getVal, l -> {
+//                    var value = fromLiteral.apply(l.head());
+//                    Symbol symbol = value.value.asLeft().value();
+//                    var resolvedVal = value.scope.get(symbol);
+//                    return new ValueLiteral<>(new Scope(value.scope, new Either.Right<>(resolvedVal)));
+//                }
         ));
-        Interpreter<String> interpreter = new Interpreter<>(parser, fromLiteral, context);
-        System.out.println(interpreter.run("1;,2;,3;"));
+        Interpreter<Scope> interpreter = new Interpreter<>(parser, fromLiteral, context);
+        //TODO for addition, ',' has to bind stronger than '+'
+        System.out.println(interpreter.run("@a;1;@b;2;,a;"));
+        //                                        ---
+        //                                        scope
     }
 }
