@@ -19,7 +19,7 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toMap;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class InterpreterTest {
 
@@ -108,7 +108,7 @@ class InterpreterTest {
                 }
         ));
         Interpreter<Integer> interpreter = new Interpreter<>(parser, fromLiteral, context);
-        assertEquals(7,interpreter.run("(!1;)+2;*(%3;@4;)"));
+        assertEquals(7, interpreter.run("(!1;)+2;*(%3;@4;)"));
 
     }
 
@@ -145,29 +145,30 @@ class InterpreterTest {
                 }
         ));
         Interpreter<Integer> interpreter = new Interpreter<>(parser, fromLiteral, context);
-        assertEquals(-1,interpreter.run("1;-1;-1;"));
+        assertEquals(-1, interpreter.run("1;-1;-1;"));
     }
 
 
     @Test
     void customLangTest() {
-
-        record Scope(Map<Symbol, Integer> scope, Either<Symbol, Integer> value){}
+        //scope is held locally only
+        record Scope(Map<Symbol, Integer> scope, Either<Symbol, Integer> value) {
+        }
 
         Symbol concat = new Symbol(",");
         Symbol storeVal = new Symbol("@");
-        Symbol getVal = new Symbol("!");
+        Symbol add = new Symbol("+");
+        Symbol mul = new Symbol("*");
 
-        var xxx = new MList<>(concat, storeVal, getVal);
-        System.out.println(xxx);
-        Lexer lexer = new Lexer(xxx);
+        Lexer lexer = new Lexer(new MList<>(concat, storeVal, add, mul));
 
         //custom Operations
-        InfixOp<Scope> operator1 = new InfixOp<>(concat, 0);
-        PrefixOp<Scope> operator2 = new PrefixOp<>(storeVal, 2, 1);
-        PrefixOp<Scope> operator3 = new PrefixOp<>(getVal, 1, 2);
+        InfixOp<Scope> operator1 = new InfixOp<>(concat, 2);
+        InfixOp<Scope> operator3 = new InfixOp<>(add, 0);
+        InfixOp<Scope> operator4 = new InfixOp<>(mul, 1);
+        PrefixOp<Scope> operator2 = new PrefixOp<>(storeVal, 2, 3);
 
-        Map<Symbol, OperatorToken<Scope>> operators = Stream.of(operator1,operator2,operator3)
+        Map<Symbol, OperatorToken<Scope>> operators = Stream.of(operator1, operator2, operator3, operator4)
                 .collect(toMap(OperatorToken::getSymbol, Function.identity()));
 
         Parser<Scope> parser = new Parser<>(lexer, operators);
@@ -194,12 +195,10 @@ class InterpreterTest {
                     var newScope = new HashMap<>(xs.scope);
                     newScope.putAll(x.scope);
 
-                    Either<Symbol, Integer> value = switch (x.value){
+                    Either<Symbol, Integer> value = switch (x.value) {
                         case Either.Left<Symbol, Integer> left -> new Either.Right<>(newScope.get(left.value()));
                         case Either.Right<Symbol, Integer> right -> right;
                     };
-
-
                     return new ValueLiteral<>(new Scope(newScope, value));
                 },
                 storeVal, l -> {
@@ -213,18 +212,149 @@ class InterpreterTest {
                     newScope.put(variable.value().asLeft().value(), value.value.asRight().value());
                     return new ValueLiteral<>(new Scope(newScope, value.value));
                 }
-//                ,
-//                getVal, l -> {
-//                    var value = fromLiteral.apply(l.head());
-//                    Symbol symbol = value.value.asLeft().value();
-//                    var resolvedVal = value.scope.get(symbol);
-//                    return new ValueLiteral<>(new Scope(value.scope, new Either.Right<>(resolvedVal)));
-//                }
+                ,
+                add, l -> {
+                    var xss = l.map(fromLiteral);
+                    var xs = xss.head();
+                    var x = xss.tail().head();
+
+                    var newScope = new HashMap<>(xs.scope);
+                    newScope.putAll(x.scope);
+
+                    var val1 = switch (xs.value) {
+                        case Either.Left<Symbol, Integer> left -> newScope.get(left.value());
+                        case Either.Right<Symbol, Integer> right -> right.value();
+                    };
+                    var val2 = switch (x.value) {
+                        case Either.Left<Symbol, Integer> left -> newScope.get(left.value());
+                        case Either.Right<Symbol, Integer> right -> right.value();
+                    };
+
+                    return new ValueLiteral<>(new Scope(newScope, new Either.Right<>(val1 + val2)));
+                }
+                ,
+                mul, l -> {
+                    var xss = l.map(fromLiteral);
+                    var xs = xss.head();
+                    var x = xss.tail().head();
+
+                    var newScope = new HashMap<>(xs.scope);
+                    newScope.putAll(x.scope);
+
+                    var val1 = switch (xs.value) {
+                        case Either.Left<Symbol, Integer> left -> newScope.get(left.value());
+                        case Either.Right<Symbol, Integer> right -> right.value();
+                    };
+                    var val2 = switch (x.value) {
+                        case Either.Left<Symbol, Integer> left -> newScope.get(left.value());
+                        case Either.Right<Symbol, Integer> right -> right.value();
+                    };
+
+                    return new ValueLiteral<>(new Scope(newScope, new Either.Right<>(val1 * val2)));
+                }
         ));
         Interpreter<Scope> interpreter = new Interpreter<>(parser, fromLiteral, context);
-        //TODO for addition, ',' has to bind stronger than '+'
-        System.out.println(interpreter.run("@a;1;@b;2;,a;"));
-        //                                        ---
-        //                                        scope
+
+        //context is held locally, therefore "@a;1;,1;+a;*2;" won't work because it is evaluated as
+        // "(((@a;1;),1;)+(a;*2));"
+        assertEquals(7, (interpreter.run("1;+2;*3;").value().asRight().value()));
+        assertEquals(3, (interpreter.run("@a;1;,@b;2;,a;+b;").value().asRight().value()));
+        assertEquals(3, (interpreter.run("@a;1;,@b;2;,a;+2;").value().asRight().value()));
+        assertEquals(6, (interpreter.run("@a;2;,@b;3;,a;*b;").value().asRight().value()));
+        assertEquals(7, (interpreter.run("@a;2;,@b;3;,a;*b;+1;").value().asRight().value()));
+        assertEquals(9, (interpreter.run("(@a;2;,@b;3;,1;+a;)*b;").value().asRight().value()));
+        assertEquals(12, (interpreter.run("(@a;(2;+1;),@b;3;,1;+a;)*b;").value().asRight().value()));
+        assertEquals(12, (interpreter.run("(1;+@a;(2;+1;),a;)*@b;3;,b;").value().asRight().value()));
     }
+
+    @Test
+    void customLangTest2() {
+        //same as customLangTest but with global scope instead of local
+        Symbol concat = new Symbol(",");
+        Symbol storeVal = new Symbol("@");
+        Symbol add = new Symbol("+");
+        Symbol mul = new Symbol("*");
+
+        Lexer lexer = new Lexer(new MList<>(concat, storeVal, add, mul));
+
+        //custom Operations
+        InfixOp<Either<Symbol, Integer>> operator1 = new InfixOp<>(concat, 2);
+        InfixOp<Either<Symbol, Integer>> operator3 = new InfixOp<>(add, 0);
+        InfixOp<Either<Symbol, Integer>> operator4 = new InfixOp<>(mul, 1);
+        PrefixOp<Either<Symbol, Integer>> operator2 = new PrefixOp<>(storeVal, 2, 3);
+
+        Map<Symbol, OperatorToken<Either<Symbol, Integer>>> operators = Stream.of(operator1, operator2, operator3, operator4)
+                .collect(toMap(OperatorToken::getSymbol, Function.identity()));
+
+        Parser<Either<Symbol, Integer>> parser = new Parser<>(lexer, operators);
+        Function<Literal<Either<Symbol, Integer>>, Either<Symbol, Integer>> fromLiteral = l -> {
+            switch (l) {
+                case SymbolLiteral<Either<Symbol, Integer>> v -> {
+                    return Either.fromEffect(
+                            Effect.fromSupplier(() -> Integer.parseInt(v.getSymbol().symbol())), v.getSymbol());
+                }
+                case ValueLiteral<Either<Symbol, Integer>> v -> {
+                    return v.getValue();
+                }
+            }
+        };
+
+        final Map<Symbol, Integer> scope = new HashMap<>();
+
+        final Function<Either<Symbol,Integer>, Integer> resolve = (s) -> switch (s) {
+            case Either.Left<Symbol, Integer> left -> scope.get(left.value());
+            case Either.Right<Symbol, Integer> right -> right.value();
+        };
+
+        Context<Either<Symbol, Integer>> context = new Context<>(Map.of(
+                concat, l -> {
+                    var xss = l.map(fromLiteral);
+                    var x = xss.tail().head();
+                    return new ValueLiteral<>(x);
+                },
+                storeVal, l -> {
+                    var xss = l.map(fromLiteral);
+                    var variable = xss.head();
+                    var value = xss.tail().head();
+
+                    var resVal = resolve.apply(value);
+
+                    scope.put(variable.asLeft().value(), resVal );
+
+                    return new ValueLiteral<>(new Either.Right<>(resVal));
+                },
+                add, l -> {
+                    var xss = l.map(fromLiteral);
+                    var xs = xss.head();
+                    var x = xss.tail().head();
+
+                    var resVal = resolve.apply(xs) + resolve.apply(x);
+                    return new ValueLiteral<>(new Either.Right<>(resVal));
+                },
+                mul, l -> {
+                    var xss = l.map(fromLiteral);
+                    var xs = xss.head();
+                    var x = xss.tail().head();
+
+                    var resVal = resolve.apply(xs) * resolve.apply(x);
+                    return new ValueLiteral<>(new Either.Right<>(resVal));
+                }
+        ));
+        Interpreter<Either<Symbol, Integer>> interpreter = new Interpreter<>(parser, fromLiteral, context);
+
+        //all expressions form customLangTest hold
+        assertEquals(7, (interpreter.run("1;+2;*3;").asRight().value()));
+        assertEquals(3, (interpreter.run("@a;1;,@b;2;,a;+b;").asRight().value()));
+        assertEquals(3, (interpreter.run("@a;1;,@b;2;,a;+2;").asRight().value()));
+        assertEquals(6, (interpreter.run("@a;2;,@b;3;,a;*b;").asRight().value()));
+        assertEquals(7, (interpreter.run("@a;2;,@b;3;,a;*b;+1;").asRight().value()));
+        assertEquals(9, (interpreter.run("(@a;2;,@b;3;,1;+a;)*b;").asRight().value()));
+        assertEquals(12, (interpreter.run("(@a;(2;+1;),@b;3;,1;+a;)*b;").asRight().value()));
+        assertEquals(12, (interpreter.run("(1;+@a;(2;+1;),a;)*@b;3;,b;").asRight().value()));
+
+        //braces are no longer needed to propagate context correctly
+        assertEquals(9, (interpreter.run("@a;2;,@b;3;,(1;+a;)*b;").asRight().value()));
+    }
+
+
 }
