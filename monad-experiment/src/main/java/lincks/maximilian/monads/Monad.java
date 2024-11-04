@@ -78,5 +78,6 @@ public interface Monad<M extends Monad<M, ?>, T> extends Applicative<M, T> {
     default <R> Monad<M, R> then(Supplier<Monad<M, R>> f) {
         return bind((T ignore) -> f.get());
     }
+
 }
 

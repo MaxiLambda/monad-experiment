@@ -6,6 +6,7 @@ import lincks.maximilian.util.BBF;
 import lincks.maximilian.util.BF;
 import org.junit.jupiter.api.Test;
 
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import static lincks.maximilian.impl.monad.MList.unwrap;
@@ -78,14 +79,27 @@ public class MListTest {
         var res = MList.unwrap(list1.foldr(new BBF<String, MList<String>, String, MList<?>>((s, sm) -> sm.prepend(s)) {
         }));
         //they have to be equal, because the values are accumulated into a new list
-        assertEquals(res,list1);
+        assertEquals(res, list1);
     }
 
     @Test
     void filterVsFilter() {
-        MList<Integer> list1 = new MList<>(1,2,3,4);
+        MList<Integer> list1 = new MList<>(1, 2, 3, 4);
         Predicate<Integer> p = i -> i % 2 == 0;
-       assertEquals(new MList<>(2,4),list1.filter(p));
-       assertEquals(new MList<>(2,4),list1.filter(p));
+        assertEquals(new MList<>(2, 4), list1.filter(p));
+        assertEquals(new MList<>(2, 4), list1.filter(p));
+    }
+
+    @Test
+    void filterMTest() {
+        MList<Integer> list1 = new MList<>(1, 2, 3, 4);
+        Function<Integer, Maybe<Boolean>> p = i -> new Maybe<>(i % 2 == 0);
+        Function<Integer, Maybe<Boolean>> pEmpty = i -> i == 3 ? Maybe.nothing() : new Maybe<>(i % 2 == 0);
+        BF<Integer, Boolean, Maybe<?>> p2 = new BF<>(i -> new Maybe<>(i % 2 == 0)) {
+        };
+
+        assertEquals(new MList<>(2, 4), Maybe.unwrap(list1.filterM(p, Maybe.class)).get());
+        assertEquals(Maybe.nothing(), Maybe.unwrap(list1.filterM(pEmpty, Maybe.class)));
+        assertEquals(new MList<>(2, 4), Maybe.unwrap(list1.filterM(p2)).get());
     }
 }

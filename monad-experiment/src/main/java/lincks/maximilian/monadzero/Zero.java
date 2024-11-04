@@ -41,12 +41,4 @@ public interface Zero<M extends Zero<M, ?>, T> extends Bottom<M,T> {
             }
         }).orElseThrow(() -> new RuntimeException("No static, 0 argument method in class '%s' is annotated with @MZero."));
     }
-
-    //TODO check if reimplementing with functor, zero, traversable, etc is possible
-
-//    static <M extends Zero<M, ?> & Functor<M,?>, T> Monad<M,T> filterM(Predicate<T> p, Zero<M,T> m) {
-//        Functor<M,T> monad = ((Functor<M, T>) m);
-//        return monad.map
-//                bind(val -> p.test(val) ? (Monad<M, T>) val : (Monad<M, T>) zero(m.getClass()));
-//    }
 }

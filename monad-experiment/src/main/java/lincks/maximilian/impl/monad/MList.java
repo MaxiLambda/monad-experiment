@@ -4,7 +4,6 @@ import lincks.maximilian.alternative.Alternative;
 import lincks.maximilian.applicative.Applicative;
 import lincks.maximilian.applicative.ApplicativeConstructor;
 import lincks.maximilian.monadplus.MonadPlus;
-import lincks.maximilian.monadpluszero.MonadPlusZero;
 import lincks.maximilian.monads.Monad;
 import lincks.maximilian.monadzero.MZero;
 import lincks.maximilian.monadzero.MonadZero;
@@ -26,6 +25,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
+import static lincks.maximilian.applicative.ApplicativePure.pure;
 import static lincks.maximilian.applicative.ApplicativePure.pureUnsafeClass;
 
 /**
@@ -36,7 +36,7 @@ import static lincks.maximilian.applicative.ApplicativePure.pureUnsafeClass;
  */
 @ToString
 @EqualsAndHashCode
-public class MList<T> implements MonadPlus<MList<?>, T>, Traversable<MList<?>, T>, Alternative<MList<?>, T>, MonadZero<MList<?>,T> {
+public class MList<T> implements MonadPlus<MList<?>, T>, Traversable<MList<?>, T>, Alternative<MList<?>, T>, MonadZero<MList<?>, T> {
     //Create LazyList implementation => can be created from suppliers and is only evaluated on request
     //evaluated values must be preserved => two lists needed internally
     //map, bind etc. create new Lists
@@ -193,6 +193,22 @@ public class MList<T> implements MonadPlus<MList<?>, T>, Traversable<MList<?>, T
     @Override
     public MList<T> filter(Predicate<T> p) {
         return new MList<>(list.stream().filter(p).toList());
+    }
+
+    public <A extends Applicative<A, ?>> Applicative<A, MList<T>> filterM(Function<T, ? extends Applicative<A, Boolean>> f, Class<? super A> clazz) {
+        Class c = clazz;
+        Applicative<A, MList<T>> id = (Applicative<A, MList<T>>) pure(new MList<T>(), c);
+        return foldr(
+                (x, acc) -> acc.liftA2((xs, flg) -> flg ? xs.prepend(x) : xs, f.apply(x)),
+                id);
+    }
+
+    public <A extends Applicative<A, ?>> Applicative<A, MList<T>> filterM(BF<T, Boolean, A> f) {
+        Class c = f.getType();
+        Applicative<A, MList<T>> id = (Applicative<A, MList<T>>) pure(new MList<T>(), c);
+        return foldr(
+                (x, acc) -> acc.liftA2((xs, flg) -> flg ? xs.prepend(x) : xs, f.applyTyped(x)),
+                id);
     }
 
     public static <T> Collector<T, ?, MList<T>> toMList() {

@@ -11,7 +11,7 @@ import java.util.function.Supplier;
  * MUST overwrite either {@link #alternative(Supplier)} or {@link #mplus}.
  * Overwriting both might be useful as they have different semantics.
  */
-public interface MonadPlusZero<M extends MonadPlusZero<M, ?>, T> extends MonadPlus<M, T>, MonadZero<M, T>, Alternative<M,T> {
+public interface MonadPlusZero<M extends MonadPlusZero<M, ?>, T> extends MonadPlus<M, T>, MonadZero<M, T>, Alternative<M, T> {
 
     @Override
     default MonadPlusZero<M, T> alternative(Supplier<? extends Alternative<M, T>> other) {
