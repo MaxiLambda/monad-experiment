@@ -7,7 +7,7 @@ import lincks.maximilian.monads.Monad;
 import lincks.maximilian.monadzero.MZero;
 import lincks.maximilian.monadzero.MonadZero;
 import lincks.maximilian.monadzero.Zero;
-import lincks.maximilian.util.Bottom;
+import lincks.maximilian.util.Top;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
@@ -42,7 +42,7 @@ public class Maybe<T> implements MonadPlus<Maybe<?>, T>, MonadZero<Maybe<?>, T> 
     /**
      * Cast a Maybe if it is wrapped in other Types.
      */
-    public static <T> Maybe<T> unwrap(Bottom<Maybe<?>, T> m) {
+    public static <T> Maybe<T> unwrap(Top<Maybe<?>, T> m) {
         return (Maybe<T>) m;
     }
 

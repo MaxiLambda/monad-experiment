@@ -4,7 +4,7 @@ import lincks.maximilian.alternative.Alternative;
 import lincks.maximilian.applicative.ApplicativeConstructor;
 import lincks.maximilian.applicative.ApplicativeConstructorDelegate;
 import lincks.maximilian.monads.Monad;
-import lincks.maximilian.util.Bottom;
+import lincks.maximilian.util.Top;
 
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -23,7 +23,7 @@ public sealed interface Either<F, T> extends Monad<Either<F, ?>, T>, Alternative
      * @param m the wrapped up Either
      * @return the cast Either
      */
-    static <F, T> Either<F, T> unwrap(Bottom<Either<F, ?>, T> m) {
+    static <F, T> Either<F, T> unwrap(Top<Either<F, ?>, T> m) {
         return (Either<F, T>) m;
     }
 

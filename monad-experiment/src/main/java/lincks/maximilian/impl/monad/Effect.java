@@ -5,7 +5,7 @@ import lincks.maximilian.applicative.ApplicativeConstructor;
 import lincks.maximilian.monads.Monad;
 import lincks.maximilian.monadzero.MZero;
 import lincks.maximilian.monadzero.MonadZero;
-import lincks.maximilian.util.Bottom;
+import lincks.maximilian.util.Top;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
@@ -42,7 +42,7 @@ public interface Effect<T> extends MonadZero<Effect<?>, T>, Alternative<Effect<?
      * @param <T>    the type of the effect.
      * @return the cast effect.
      */
-    static <T> Effect<T> unwrap(Bottom<Effect<?>, T> effect) {
+    static <T> Effect<T> unwrap(Top<Effect<?>, T> effect) {
         return (Effect<T>) effect;
     }
 

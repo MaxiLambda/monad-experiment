@@ -78,14 +78,6 @@ class ParserTest {
     }
 
     @Test
-    void plusplusTest() {
-        var x = parser.run("1;+2;+3;");
-        //TODO
-//        var x = parser.run("1;+2;+3;+4;");
-        System.out.println(x);
-    }
-
-    @Test
     void complicatedTest() {
         var x = parser.run("(!1;)+2;*(%3;@4;)");
         assertEquals(new Expression<>(symbol5, new MList<>(

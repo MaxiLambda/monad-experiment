@@ -10,6 +10,6 @@ import lincks.maximilian.monadzero.Zero;
  * @param <B> the Type wrapping T.
  * @param <T> the Type which is wrapped.
  */
-public interface Bottom<B extends Bottom<B, ?>, T> {
+public interface Top<B extends Top<B, ?>, T> {
 }
 

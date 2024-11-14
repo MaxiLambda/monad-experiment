@@ -2,7 +2,7 @@ package lincks.maximilian.monadzero;
 
 import lincks.maximilian.functor.Functor;
 import lincks.maximilian.monads.Monad;
-import lincks.maximilian.util.Bottom;
+import lincks.maximilian.util.Top;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -15,7 +15,7 @@ import static lincks.maximilian.monads.MonadPure.pure;
 /**
  * Describes a Class where Instances can be created for any type without a parameter.
  */
-public interface Zero<M extends Zero<M, ?>, T> extends Bottom<M,T> {
+public interface Zero<M extends Zero<M, ?>, T> extends Top<M,T> {
 
     /**
      * Static method used to create a static no parameter Instance of a Class.

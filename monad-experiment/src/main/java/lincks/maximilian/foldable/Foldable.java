@@ -4,9 +4,9 @@ import lincks.maximilian.alternative.Alternative;
 import lincks.maximilian.monadplus.MonadPlus;
 import lincks.maximilian.monadpluszero.MonadPlusZero;
 import lincks.maximilian.monadzero.Zero;
-import lincks.maximilian.util.BBF;
-import lincks.maximilian.util.BF;
-import lincks.maximilian.util.Bottom;
+import lincks.maximilian.util.TBF;
+import lincks.maximilian.util.TF;
+import lincks.maximilian.util.Top;
 
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -20,7 +20,7 @@ import static lincks.maximilian.monadzero.Zero.zero;
  * @param <F> the type of the Foldable
  * @param <T> the type the foldable wraps over
  */
-public interface Foldable<F extends Foldable<F, ?>, T> extends Bottom<F, T> {
+public interface Foldable<F extends Foldable<F, ?>, T> extends Top<F, T> {
 
     /**
      * Reduce a foldable to a single value by applying a function repeatedly to its values and an accumulator.
@@ -42,7 +42,7 @@ public interface Foldable<F extends Foldable<F, ?>, T> extends Bottom<F, T> {
      * @param <R>  the type of the result
      * @return the result of successively applying acc to all values in this
      */
-    default <MZ extends Zero<MZ, ?>, R> Zero<MZ, R> foldr(BBF<T, ? extends Zero<MZ, R>, R, MZ> acc) {
+    default <MZ extends Zero<MZ, ?>, R> Zero<MZ, R> foldr(TBF<T, ? extends Zero<MZ, R>, R, MZ> acc) {
         return foldr((BiFunction<T, Zero<MZ, R>, Zero<MZ, R>>) acc.getFunction(), (Zero<MZ, R>) zero(acc.getType()));
     }
 
@@ -60,10 +60,10 @@ public interface Foldable<F extends Foldable<F, ?>, T> extends Bottom<F, T> {
 
     /**
      * {@link #foldr} implementation based on {@link Alternative#alternative(Supplier)}.
-     * If you provide a {@link BF} the class argument{@link #foldMapA(Function, Class)} can be omitted.
+     * If you provide a {@link TF} the class argument{@link #foldMapA(Function, Class)} can be omitted.
      * foldMap implementation based on {@link Alternative}.
      */
-    default <A extends Alternative<A, ?>, R> Alternative<A, R> foldMapA(BF<T, R, A> f) {
+    default <A extends Alternative<A, ?>, R> Alternative<A, R> foldMapA(TF<T, R, A> f) {
         return foldr((T t, Alternative<A, R> acc) -> acc.alternative(() -> f.applyTyped(t)), (Alternative<A, R>) zero(f.getType()));
     }
 
@@ -77,10 +77,10 @@ public interface Foldable<F extends Foldable<F, ?>, T> extends Bottom<F, T> {
 
     /**
      * {@link #foldr} implementation based on {@link MonadPlusZero#mplus(MonadPlus)}
-     * If you provide a {@link BF} the class argument from {@link #foldMapM(Function, Class)} can be omitted.
+     * If you provide a {@link TF} the class argument from {@link #foldMapM(Function, Class)} can be omitted.
      * foldMap implementation based on {@link MonadPlusZero}
      */
-    default <M extends MonadPlusZero<M, ?>, R> MonadPlusZero<M, R> foldMapM(BF<T, R, M> f) {
+    default <M extends MonadPlusZero<M, ?>, R> MonadPlusZero<M, R> foldMapM(TF<T, R, M> f) {
         return foldr((T t, MonadPlusZero<M, R> acc) -> acc.mplus(f.applyTyped(t)), (MonadPlusZero<M, R>) zero(f.getType()));
     }
 }

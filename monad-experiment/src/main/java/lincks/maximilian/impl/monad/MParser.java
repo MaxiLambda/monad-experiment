@@ -5,7 +5,7 @@ import lincks.maximilian.applicative.ApplicativeConstructor;
 import lincks.maximilian.monads.Monad;
 import lincks.maximilian.monadzero.MZero;
 import lincks.maximilian.monadzero.Zero;
-import lincks.maximilian.util.Bottom;
+import lincks.maximilian.util.Top;
 import lombok.ToString;
 
 import java.util.function.BiFunction;
@@ -45,7 +45,7 @@ public class MParser<S, T> implements Monad<MParser<S, ?>, T>, Alternative<MPars
     /**
      * Unwrap/Cast nested Parser Types.
      */
-    public static <S, T> MParser<S, T> unwrap(Bottom<MParser<S, ?>, T> m) {
+    public static <S, T> MParser<S, T> unwrap(Top<MParser<S, ?>, T> m) {
         return (MParser<S, T>) m;
     }
 

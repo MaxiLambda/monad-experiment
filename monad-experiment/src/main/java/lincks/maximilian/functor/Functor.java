@@ -1,13 +1,13 @@
 package lincks.maximilian.functor;
 
-import lincks.maximilian.util.Bottom;
+import lincks.maximilian.util.Top;
 
 import java.util.function.Function;
 
 /**
  * Describes a context over a Type. The wrapped Type can be changed by mapping over it.
  */
-public interface Functor<F extends Functor<F, ?>, T> extends Bottom<F, T> {
+public interface Functor<F extends Functor<F, ?>, T> extends Top<F, T> {
     /**
      * Maps the given Functor to another functor by applying f.
      *

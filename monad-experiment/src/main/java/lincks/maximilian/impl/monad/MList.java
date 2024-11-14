@@ -9,8 +9,8 @@ import lincks.maximilian.monadzero.MZero;
 import lincks.maximilian.monadzero.MonadZero;
 import lincks.maximilian.monadzero.Zero;
 import lincks.maximilian.traversable.Traversable;
-import lincks.maximilian.util.BF;
-import lincks.maximilian.util.Bottom;
+import lincks.maximilian.util.TF;
+import lincks.maximilian.util.Top;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
@@ -74,7 +74,7 @@ public class MList<T> implements MonadPlus<MList<?>, T>, Traversable<MList<?>, T
     /**
      * Cast to MList if wrapped in other type.
      */
-    public static <T> MList<T> unwrap(Bottom<MList<?>, T> m) {
+    public static <T> MList<T> unwrap(Top<MList<?>, T> m) {
         return (MList<T>) m;
     }
 
@@ -100,7 +100,7 @@ public class MList<T> implements MonadPlus<MList<?>, T>, Traversable<MList<?>, T
     }
 
     @Override
-    public <A extends Applicative<A, ?>, R> Applicative<A, MList<R>> traverse(BF<T, R, A> f) {
+    public <A extends Applicative<A, ?>, R> Applicative<A, MList<R>> traverse(TF<T, R, A> f) {
         if (list.isEmpty()) {
             return (Applicative<A, MList<R>>) pureUnsafeClass(new MList<R>(), f.getType());
         } else {
@@ -203,7 +203,7 @@ public class MList<T> implements MonadPlus<MList<?>, T>, Traversable<MList<?>, T
                 id);
     }
 
-    public <A extends Applicative<A, ?>> Applicative<A, MList<T>> filterM(BF<T, Boolean, A> f) {
+    public <A extends Applicative<A, ?>> Applicative<A, MList<T>> filterM(TF<T, Boolean, A> f) {
         Class c = f.getType();
         Applicative<A, MList<T>> id = (Applicative<A, MList<T>>) pure(new MList<T>(), c);
         return foldr(
