@@ -44,7 +44,7 @@ public class Maybe<T> implements Monad<Maybe<?>, T> {
     private static final Maybe<Void> nothing = new Maybe<>(null);
     private final T value;
 
-    @MonadConstructor
+    @ApplicativeConstructor
     public Maybe(T value) {
         this.value = value;
     }
@@ -109,7 +109,45 @@ The following classes are basically Monads:
 The benefit of unifying all Monads with a dedicated class, is the ability to write generic code.
 Of course this requires more than just the Monad interface. Take Haskell for example, there are multiple classes 
 describing the abilities of types.
-![implemented_interfaces](docs/interfaces.png)
-If these Types are provided, more abstract functionalities can be provided.
+![implemented_interfaces](docs/558px-FunctorHierarchy.svg.png)
+If these Types are given, more abstract functionalities can be provided.
 
+Existing libraries often provide useful monads. Sadly they don't offer ways to write common code for these monads. Utility
+functions have to be rewritten for each monad, which heavily increases the amount boilerplate code. Many small but useful functions,
+can be composed to the required task. This enforces code reuse and promotes functional paradigm. 
 
+This projects type hierarchy is inspired by the haskell hierarchy seen above. Key differences are the splitting of
+Haskell's `MonadPlus` into `MonadZero`, `MonadPlus` and `MonadPlusZero` and the introduction of the `Top` type as a 
+common ancestor to the other types.
+
+![type_hierarchy](docs/interfaces.png)
+
+### Monad Libraries is Java
+
+#### [Vavr](https://github.com/vavr-io/vavr/tree/master)
+One of the more known functional-programming libraries for java is [vavr](https://github.com/vavr-io/vavr/tree/master). 
+Vavr comes with a lot of functionality which can be considered a small standard-library. It provides not only
+immutable data-structures, an altered collections library, property-based testing and more expressive function-interfaces but monadic data-types as well. 
+Among these types are types similar to existing java types like `Option` (similar to `Optional`) and `Future` (similar to `CompletableFuture`).
+`Option` and `Future` repackage existing functionality in a vavr like fashion. Other types like `Try` or `Either` are novel to the java ecosystem.
+`Either` is similar to `Option`, but failure now relates to a value, for example the reason why the computation has failed.
+`Try` is used to manipulate the control flow in applications. When an `Exception` is thrown, the control-flow differs from the data flow.
+`Try` abstracts computations that might throw exceptions, exceptions don't interrupt the data-flow anymore. Control flows like usually.  
+
+The `io.vavr.Value` type, which is the top-type of all monadic values in vavr, is more similar to a Functor/Alternative combination. A `Value` must
+have a `map` function (Functor) to and can be checked for emptiness (Alternative without the Applicative parts - no pure function).
+
+### [Better Monads](https://github.com/jasongoodwin/better-java-monads/tree/master)
+
+[Better Monads](https://github.com/jasongoodwin/better-java-monads/tree/master) is a small java library trying to improve the
+java 8 experience with a `Try` type. The `Try` type offers similar functionality to vavrs-Try. Better monads includes a static
+`sequence` Function to transform a `List` of `CompletableFuture`s into a `CompletableFuture` of a `List` 
+(`List<CompletableFuture<X>>` -> `CompletableFuture<List<X>>`). This library tries to be non-intrusive.
+
+### [purefun](https://github.com/tonivade/purefun/tree/master)
+
+[purefun](https://github.com/tonivade/purefun/tree/master) is a functional java library similar to this one.
+It offers Monads (and implementations for many monads) and similar types (Monoid, Applicative, Functor, Foldable, etc...) and other things known from haskell
+like optics (updating of nested structures) monad-transformers. All Monads from this library share a common base type.
+//TODO write more
+//basically the same as this lib but more powerful

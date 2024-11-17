@@ -68,3 +68,19 @@ do
 * `getValueC` is a one argument funciton returning a monadic value of the monad M
 * `someOperation` is a no argument function returing a monadic value of the monad M
 * `getValueD` is a one argument function retuning a value
+
+## Monads in Clojure
+
+* Sequence (flatMap/list, for as do-Notation)
+* implicit Identity (do-Notation as let-Expression)
+
+
+### [algo.monads](https://github.com/clojure/algo.monads)
+
+[algo.monads](https://github.com/clojure/algo.monads) is a clojure library for monads. It supports different monads and utilities.  
+
+* Support for many different monads (Id, Maybe, Sequence, State, ...)
+* Support for some monad-transformers (State, Maybe, Sequence)
+* do-Notation as Macro for Monads
+
+algo.monads is written in clojure and can't be used from java.
