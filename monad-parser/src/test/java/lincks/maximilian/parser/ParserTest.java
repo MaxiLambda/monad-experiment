@@ -40,7 +40,7 @@ class ParserTest {
 
     @Test
     void infixTest() {
-        var x = parser.run("1;+2;");
+        var x = parser.run("1+2");
         assertEquals(new Expression<>(symbol5, new MList<>(
                 new SymbolLiteral<>(new Symbol("1")),
                 new SymbolLiteral<>(new Symbol("2")))), x);
@@ -48,12 +48,12 @@ class ParserTest {
 
     @Test
     void bracesTest() {
-        var x = parser.run("(!1;)+2;");
+        var x = parser.run("(!1)+2");
         assertEquals(new Expression<>(symbol5, new MList<>(
                 new Expression<>(symbol1, new MList<>(new SymbolLiteral<>(new Symbol("1")))),
                 new SymbolLiteral<>(new Symbol("2")))), x);
 
-        var xx = parser.run("!1;*2;");
+        var xx = parser.run("!1*2");
         assertEquals(new Expression<>(symbol1, new MList<>(
                 new Expression<>(symbol6, new MList<>(
                         new SymbolLiteral<>(new Symbol("1")),
@@ -63,15 +63,15 @@ class ParserTest {
 
     @Test
     void singleValueTest() {
-        var x = parser.run("1;");
-        var xx = parser.run("(1;)");
+        var x = parser.run("1");
+        var xx = parser.run("(1)");
         assertEquals(new SymbolLiteral<>(new Symbol("1")),x);
         assertEquals(new SymbolLiteral<>(new Symbol("1")),xx);
     }
 
     @Test
     void binaryPrefixTest() {
-        var x = parser.run("?1;2;");
+        var x = parser.run("? 1 2");
         assertEquals(new Expression<>(symbol4, new MList<>(
                 new SymbolLiteral<>(new Symbol("1")),
                 new SymbolLiteral<>(new Symbol("2")))), x);
@@ -79,7 +79,7 @@ class ParserTest {
 
     @Test
     void complicatedTest() {
-        var x = parser.run("(!1;)+2;*(%3;@4;)");
+        var x = parser.run("(!1)+2*(%3@4)");
         assertEquals(new Expression<>(symbol5, new MList<>(
                 new Expression<>(symbol1, new MList<>(new SymbolLiteral<>(new Symbol("1")))),
                 new Expression<>(symbol6, new MList<>(

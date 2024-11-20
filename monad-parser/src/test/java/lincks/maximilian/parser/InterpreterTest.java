@@ -108,7 +108,7 @@ class InterpreterTest {
                 }
         ));
         Interpreter<Integer> interpreter = new Interpreter<>(parser, fromLiteral, context);
-        assertEquals(7, interpreter.run("(!1;)+2;*(%3;@4;)"));
+        assertEquals(7, interpreter.run("(!1)+2*(%3@4)"));
 
     }
 
@@ -145,7 +145,7 @@ class InterpreterTest {
                 }
         ));
         Interpreter<Integer> interpreter = new Interpreter<>(parser, fromLiteral, context);
-        assertEquals(-1, interpreter.run("1;-1;-1;"));
+        assertEquals(-1, interpreter.run("1-1-1"));
     }
 
 
@@ -257,14 +257,14 @@ class InterpreterTest {
 
         //context is held locally, therefore "@a;1;,1;+a;*2;" won't work because it is evaluated as
         // "(((@a;1;),1;)+(a;*2));"
-        assertEquals(7, (interpreter.run("1;+2;*3;").value().asRight().value()));
-        assertEquals(3, (interpreter.run("@a;1;,@b;2;,a;+b;").value().asRight().value()));
-        assertEquals(3, (interpreter.run("@a;1;,@b;2;,a;+2;").value().asRight().value()));
-        assertEquals(6, (interpreter.run("@a;2;,@b;3;,a;*b;").value().asRight().value()));
-        assertEquals(7, (interpreter.run("@a;2;,@b;3;,a;*b;+1;").value().asRight().value()));
-        assertEquals(9, (interpreter.run("(@a;2;,@b;3;,1;+a;)*b;").value().asRight().value()));
-        assertEquals(12, (interpreter.run("(@a;(2;+1;),@b;3;,1;+a;)*b;").value().asRight().value()));
-        assertEquals(12, (interpreter.run("(1;+@a;(2;+1;),a;)*@b;3;,b;").value().asRight().value()));
+        assertEquals(7, (interpreter.run("1+2*3").value().asRight().value()));
+        assertEquals(3, (interpreter.run("@a 1,@b 2,a+b").value().asRight().value()));
+        assertEquals(3, (interpreter.run("@a 1,@b 2,a+2").value().asRight().value()));
+        assertEquals(6, (interpreter.run("@a 2,@b 3,a*b").value().asRight().value()));
+        assertEquals(7, (interpreter.run("@a 2,@b 3,a*b+1").value().asRight().value()));
+        assertEquals(9, (interpreter.run("(@a 2,@b 3,1+a)*b").value().asRight().value()));
+        assertEquals(12, (interpreter.run("(@a(2+1),@b 3,1+a)*b").value().asRight().value()));
+        assertEquals(12, (interpreter.run("(1+@a(2+1),a)*@b 3,b").value().asRight().value()));
     }
 
     @Test
@@ -301,7 +301,7 @@ class InterpreterTest {
 
         final Map<Symbol, Integer> scope = new HashMap<>();
 
-        final Function<Either<Symbol,Integer>, Integer> resolve = (s) -> switch (s) {
+        final Function<Either<Symbol, Integer>, Integer> resolve = (s) -> switch (s) {
             case Either.Left<Symbol, Integer> left -> scope.get(left.value());
             case Either.Right<Symbol, Integer> right -> right.value();
         };
@@ -319,7 +319,7 @@ class InterpreterTest {
 
                     var resVal = resolve.apply(value);
 
-                    scope.put(variable.asLeft().value(), resVal );
+                    scope.put(variable.asLeft().value(), resVal);
 
                     return new ValueLiteral<>(new Either.Right<>(resVal));
                 },
@@ -343,17 +343,28 @@ class InterpreterTest {
         Interpreter<Either<Symbol, Integer>> interpreter = new Interpreter<>(parser, fromLiteral, context);
 
         //all expressions form customLangTest hold
-        assertEquals(7, (interpreter.run("1;+2;*3;").asRight().value()));
-        assertEquals(3, (interpreter.run("@a;1;,@b;2;,a;+b;").asRight().value()));
-        assertEquals(3, (interpreter.run("@a;1;,@b;2;,a;+2;").asRight().value()));
-        assertEquals(6, (interpreter.run("@a;2;,@b;3;,a;*b;").asRight().value()));
-        assertEquals(7, (interpreter.run("@a;2;,@b;3;,a;*b;+1;").asRight().value()));
-        assertEquals(9, (interpreter.run("(@a;2;,@b;3;,1;+a;)*b;").asRight().value()));
-        assertEquals(12, (interpreter.run("(@a;(2;+1;),@b;3;,1;+a;)*b;").asRight().value()));
-        assertEquals(12, (interpreter.run("(1;+@a;(2;+1;),a;)*@b;3;,b;").asRight().value()));
+        assertEquals(7, (interpreter.run("1 +2 *3 ").asRight().value()));
+        assertEquals(3, (interpreter.run("@a 1 ,@b 2 ,a +b ").asRight().value()));
+        assertEquals(3, (interpreter.run("@a 1 ,@b 2 ,a +2 ").asRight().value()));
+        assertEquals(6, (interpreter.run("@a 2 ,@b 3 ,a *b ").asRight().value()));
+        assertEquals(7, (interpreter.run("@a 2 ,@b 3 ,a *b +1 ").asRight().value()));
+        assertEquals(9, (interpreter.run("(@a 2 ,@b 3 ,1 +a )*b ").asRight().value()));
+        assertEquals(12, (interpreter.run("(@a (2 +1),@b 3 ,1 +a )*b ").asRight().value()));
+        assertEquals(12, (interpreter.run("(1 +@a (2 +1 ),a )*@b 3 ,b ").asRight().value()));
 
         //braces are no longer needed to propagate context correctly
-        assertEquals(9, (interpreter.run("@a;2;,@b;3;,(1;+a;)*b;").asRight().value()));
+        assertEquals(9, (interpreter.run("""
+                @a 2,
+                @b 3,
+                (1+a)*b
+                """).asRight().value()));
+
+        //test operator precedence
+        assertEquals(7, (interpreter.run("""
+                @a 2,
+                @b 3,
+                1+a*b
+                """).asRight().value()));
     }
 
 

@@ -8,11 +8,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class LexerTest {
 
+
     @Test
     void run() {
         Lexer lexer = new Lexer(new MList<>("*", "+", "->", "-").map(Symbol::new));
 
-        String input = "->)2;(3;*4;-->4;";
+        String input = "->)2(3*4-->4";
         var res = lexer.getSymbols(input);
 
         assertEquals(new MList<>(
