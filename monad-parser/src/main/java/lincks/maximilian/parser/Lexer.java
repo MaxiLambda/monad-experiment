@@ -16,7 +16,7 @@ import static lincks.maximilian.parser.token.SyntaxToken.R_BRACE;
 @RequiredArgsConstructor
 public class Lexer {
     private final static MList<Symbol> braceSymbols = new MList<>(L_BRACE.getSymbol(), R_BRACE.getSymbol());
-    private final static Predicate<Character> spacyChar = c -> Pattern.matches("\\s|\\n|\\r", c + "");
+    private final static Predicate<Character> spacyChar = c -> Pattern.matches("\\s|\\n|\\r", Pattern.quote(c + ""));
     private final MList<Symbol> operatorSymbols;
 
 
