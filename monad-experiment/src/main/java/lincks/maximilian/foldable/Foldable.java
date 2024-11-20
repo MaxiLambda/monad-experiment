@@ -1,6 +1,7 @@
 package lincks.maximilian.foldable;
 
 import lincks.maximilian.alternative.Alternative;
+import lincks.maximilian.impl.monad.MList;
 import lincks.maximilian.monadplus.MonadPlus;
 import lincks.maximilian.monadpluszero.MonadPlusZero;
 import lincks.maximilian.monadzero.Zero;
@@ -10,6 +11,7 @@ import lincks.maximilian.util.Top;
 
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import static lincks.maximilian.monadzero.Zero.zero;
@@ -82,5 +84,24 @@ public interface Foldable<F extends Foldable<F, ?>, T> extends Top<F, T> {
      */
     default <M extends MonadPlusZero<M, ?>, R> MonadPlusZero<M, R> foldMapM(TF<T, R, M> f) {
         return foldr((T t, MonadPlusZero<M, R> acc) -> acc.mplus(f.applyTyped(t)), (MonadPlusZero<M, R>) zero(f.getType()));
+    }
+
+
+    /**
+     * Checks if all Elements satisfy the predicate. NOT LAZY
+     * @param predicate the predicate to check the values against
+     * @return weather or not all Elements satisfy predicate
+     */
+    default boolean all(Predicate<T> predicate) {
+        return foldr((val, acc) -> acc && predicate.test(val),true);
+    }
+
+    /**
+     * Checks if any Element satisfies the predicate. NOT LAZY
+     * @param predicate the predicate to check the values against
+     * @return weather or not any Element satisfies predicate
+     */
+    default boolean any(Predicate<T> predicate) {
+        return foldr((val, acc) -> acc || predicate.test(val),false);
     }
 }

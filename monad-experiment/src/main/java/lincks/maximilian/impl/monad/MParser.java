@@ -162,6 +162,17 @@ public class MParser<S, T> implements Monad<MParser<S, ?>, T>, Alternative<MPars
         });
     }
 
+    /**
+     * Applies the current parser as often as possible, returns an additional parsing result for each application
+     *
+     * @return a parser applying the current parse as often as possible but at least once.
+     */
+    public MParser<S, MList<T>> many3() {
+        return bind(x -> many3()
+                .bind(xs -> new MParser<>(xs.prepend(x)))
+                .plus(new MParser<>(new MList<>(x))));
+    }
+
 
     /**
      * Creates a Parser which applies the current parser and then, if possible the other parser.
