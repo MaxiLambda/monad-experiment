@@ -41,7 +41,6 @@ public class Parser<T> {
 
     public AstExpression<T> run(String input) {
         Deque<Symbol> symbols = new ArrayDeque<>(lexer.getSymbols(input).toList());
-        System.out.println(symbols);
         //translate Symbols into expressions with the parsing-table from the readme
         //if a symbol is not in operators.values(), L_BRACE.getSymbol() or R_BRACE.getSymbol() it has to be a Literal
         return generateAst(INITIAL_PRODUCTION.apply(operatorStrength::get), symbols);
@@ -50,10 +49,10 @@ public class Parser<T> {
     private AstExpression<T> generateAst(Either<MList<Production>, Production.OperatorProduction> production, Deque<Symbol> symbols) {
         switch (production) {
             case Either.Left<MList<Production>, Production.OperatorProduction> v -> {
-                System.out.println("LIST: " + v.value());
+//                System.out.println("LIST: " + v.value());
             }
             case Either.Right<MList<Production>, Production.OperatorProduction> v -> {
-                System.out.println("OPERATOR (" + v.value().operator() + "): " + v.value().productions());
+//                System.out.println("OPERATOR (" + v.value().operator() + "): " + v.value().productions());
             }
         }
         return switch (production) {
@@ -110,11 +109,11 @@ public class Parser<T> {
         if (operatorProduction.productions().isEmpty()) {
             //No parameter expression => is a literal
             var removed = symbols.removeFirst();
-            System.out.println(removed);
+//            System.out.println(removed);
             return new SymbolLiteral<>(operatorProduction.operator());
         }
         var removed = symbols.removeFirst();
-        System.out.println(removed);
+//        System.out.println(removed);
         return new Expression<>(operatorProduction.operator(), generateAstList(operatorProduction.productions(), symbols));
     }
 

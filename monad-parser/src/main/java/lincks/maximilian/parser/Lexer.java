@@ -24,8 +24,6 @@ public class Lexer {
 
         String cleanedInput = input.replaceAll("(^[\\s\\n\\r]*)|([\\s\\n\\r]*$)", "");
 
-        int maxOperatorLength = operatorSymbols.map(Symbol::symbol).map(String::length).foldr(Math::max, 0);
-
         MList<MParser<Character, Symbol>> operatorParsers = fromSymbols(operatorSymbols);
         MList<MParser<Character, Symbol>> braceParsers = fromSymbols(braceSymbols);
         MParser<Character, Symbol> literalParser =
@@ -36,9 +34,7 @@ public class Lexer {
                                 .many3()
                                 .consumeAll(spacyChar)
                                 .map(list -> list.foldr((val, acc) -> val + acc, ""))
-                                .map(Symbol::new)
-                        )
-                ;
+                                .map(Symbol::new));
 
         MParser<Character, MList<Symbol>> symbolParser = braceParsers
                 .mplus(operatorParsers)
