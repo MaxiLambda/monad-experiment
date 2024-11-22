@@ -569,6 +569,144 @@ class InterpreterTest {
         }
     }
 
+    class Interpreter5 {
+        //COMBINATION OF Interpreter3 and INterpreter4
+
+        Symbol negation = new Symbol("!");
+        Symbol implication = new Symbol("=>");
+        Symbol equivalence = new Symbol("<>");
+        Symbol union = new Symbol("||");
+        Symbol intersection = new Symbol("&&");
+
+        Lexer lexer = new Lexer(new MList<>(negation, implication, equivalence, union, intersection));
+
+        //custom Operations
+
+        PrefixOp<AstExpression<?>> negate = new PrefixOp<>(negation, 1, 4);
+        InfixOp<AstExpression<?>> intersect = new InfixOp<>(intersection, 3);
+        InfixOp<AstExpression<?>> unite = new InfixOp<>(union, 2);
+        InfixOp<AstExpression<?>> imply = new InfixOp<>(implication, 1);
+        InfixOp<AstExpression<?>> equal = new InfixOp<>(equivalence, 0);
+
+        Map<Symbol, OperatorToken<AstExpression<?>>> operators = Stream.of(negate, equal, imply, unite, intersect)
+                .collect(toMap(OperatorToken::getSymbol, Function.identity()));
+
+        Parser<AstExpression<?>> parser = new Parser<>(lexer, operators);
+
+        Function<Symbol, AstExpression<Symbol>> symbolToAst = ValueLiteral::new;
+
+        Function<Literal<AstExpression<?>>, AstExpression<?>> fromLiteral = l -> {
+            switch (l) {
+                case SymbolLiteral<AstExpression<?>> v -> {
+                    return v;
+                }
+                case ValueLiteral<AstExpression<?>> v -> {
+                    return v.getValue();
+                }
+            }
+        };
+
+        class Helper {
+            AstExpression<?> neg(AstExpression<?> expr) {
+                switch (expr) {
+                    case ValueLiteral<?> v -> {
+                        //negate the value by returning a negated expression - RECURSIVE
+                        return neg((AstExpression<?>) v.getValue());
+                    }
+                    case SymbolLiteral<?> v -> {
+                        //negate by returning new Expression with negation operator
+                        return new Expression<>(negation, new MList<>(v));
+                    }
+                    case Expression<?> v -> {
+                        if (v.getSymbol().equals(negation)) {
+                            //remove negation by just returning the first argument of the negation
+                            return v.getArgs().head();
+                        } else if (v.getSymbol().equals(union)) {
+                            //!(a || b) -> (!a && !b)
+                            return new Expression<>(intersection, v.getArgs().map(this::neg).map(e -> (AstExpression<AstExpression<?>>) e));
+                        } else if (v.getSymbol().equals(intersection)) {
+                            //!(a && b) -> (!a || !b)
+                            return new Expression<>(union, v.getArgs().map(this::neg).map(e -> (AstExpression<AstExpression<?>>) e));
+                        }
+                        throw new RuntimeException();
+                    }
+                }
+            }
+
+            ;
+        }
+
+        Context<AstExpression<?>> context = new Context<>(Map.of(
+                negation, l -> {
+                    AstExpression<?> clause = fromLiteral.apply(l.head());
+                    return new ValueLiteral<>(new Helper().neg(clause));
+                },
+                union, l -> {
+                    var params = l.map(fromLiteral).map(e -> (AstExpression<Object>) e);
+                    return new ValueLiteral<>(new Expression<>(union, params));
+                },
+                intersection, l -> {
+                    var params = l.map(fromLiteral).map(e -> (AstExpression<Object>) e);
+                    return new ValueLiteral<>(new Expression<>(intersection, params));
+                },
+                implication, l -> {
+                    var params = l.map(fromLiteral).map(e -> (AstExpression<Object>) e);
+                    var x = params.head();
+                    var y = params.tail().head();
+
+                    var xNeg = new Expression<>(negation, new MList<>(x));
+
+                    var impl = new Expression<>(union, new MList<>(xNeg, y));
+
+                    return new ValueLiteral<>(impl);
+                },
+                equivalence, l -> {
+                    var params = l.map(fromLiteral).map(e -> (AstExpression) e).map(ValueLiteral::new);
+                    var x = params.head();
+                    var y = params.tail().head();
+
+                    var xNeg = new Expression<>(negation, new MList<>(x));
+                    var yNeg = new Expression<>(negation, new MList<>(y));
+
+                    var impl1 = new Expression<>(union, new MList<>(xNeg, y));
+                    var impl2 = new Expression<>(union, new MList<>(yNeg, x));
+
+                    var eq = new Expression<>(intersection, new MList<>(impl1, impl2));
+                    return new ValueLiteral<>(eq);
+                }
+        ));
+
+        Interpreter<AstExpression<?>> interpreter = new Interpreter<>(parser, fromLiteral, context);
+
+        String asString(AstExpression<?> expr) {
+         switch (expr) {
+                case ValueLiteral<?> v -> {
+                    //negate the value by returning a negated expression - RECURSIVE
+                    return asString((AstExpression<?>) v.getValue());
+                }
+                case SymbolLiteral<?> v -> {
+                    //negate by returning new Expression with negation operator
+                    return v.getSymbol().symbol();
+                }
+                case Expression<?> v -> {
+                    if (v.getSymbol().equals(negation)) {
+                        //remove negation by just returning the first argument of the negation
+                        return "!%s".formatted(v.getArgs().map(this::asString).head());
+                    } else if (v.getSymbol().equals(union)) {
+                        //!(a || b) -> (!a && !b)
+                        var args = v.getArgs().map(this::asString);
+                        return "(%s || %s)".formatted(args.head(), args.tail().head());
+                    } else if (v.getSymbol().equals(intersection)) {
+                        //!(a || b) -> (!a && !b)
+                        var args = v.getArgs().map(this::asString);
+                        return "%s && %s".formatted(args.head(), args.tail().head());
+                    }
+                    throw new RuntimeException();
+                }
+            }
+        }
+    }
+
     @Test
     void customLangTest3() {
 
@@ -594,18 +732,23 @@ class InterpreterTest {
     void customLangTest5(){
         var i3 = new Interpreter3();
         var i4 = new Interpreter4();
+        var i5 = new Interpreter5();
         var i3res = i3.interpreter.run("(!x1 && !(x3 <> x2)) || ((x3 => !x4) && (x1 => (x2 || !x3)) && x4))");
         var i4res = i4.interpreter.run(i3res);
         var i4str = i4.asString(i4res);
         var i3res2 = i3.interpreter.run(i4str);
+        var ast5 = i5.interpreter.run("(!x1 && !(x3 <> x2)) || ((x3 => !x4) && (x1 => (x2 || !x3)) && x4))");
         System.err.println("### (!x1 && !(x3 <> x2)) || ((x3 => !x4) && (x1 => (x2 || !x3)) && x4))");
         System.err.println("### " + i3res);
         System.err.println("### " + i4str);
+        System.err.println("### " + i5.asString(ast5));
         System.err.println("### " + i3res2);
     }
 
     @Test
     void asasd(){
-        System.err.println(new Interpreter3().interpreter.run("a || b && c"));
+        var i5 = new Interpreter5();
+        var ast5 = i5.interpreter.run("(!x1 && !(x3 <> x2)) || ((x3 => !x4) && (x1 => (x2 || !x3)) && x4))");
+        System.err.println(i5.asString(ast5));
     }
 }
