@@ -24,7 +24,9 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
+import static java.lang.Math.max;
 import static lincks.maximilian.applicative.ApplicativePure.pure;
 import static lincks.maximilian.applicative.ApplicativePure.pureUnsafeClass;
 
@@ -221,5 +223,35 @@ public class MList<T> implements MonadPlus<MList<?>, T>, Traversable<MList<?>, T
 
     public boolean isEmpty() {
         return list.isEmpty();
+    }
+
+    /**
+     * Sliding windows.
+     *
+     * @param size the size of the windows.
+     * @return all sliding values of size.
+     */
+    public MList<MList<T>> windows(int size) {
+        return IntStream.iterate(0, i -> i + 1)
+                .limit(max(0, 1 + size() - size))
+                .mapToObj(i -> new MList<>(list.subList(i, i + size)))
+                .collect(toMList());
+    }
+
+    public MList<MList<T>> splitAt(Predicate<T> predicate) {
+        ArrayList<ArrayList<T>> l = new ArrayList<>();
+
+        for (T val : list) {
+            if (predicate.test(val)) {
+                l.add(new ArrayList<>());
+            } else {
+                if (l.isEmpty()) {
+                    l.add(new ArrayList<>());
+                }
+                l.getLast().add(val);
+            }
+        }
+
+        return l.stream().map(MList::fromList).collect(toMList());
     }
 }

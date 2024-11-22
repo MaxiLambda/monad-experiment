@@ -9,6 +9,8 @@ import lincks.maximilian.util.TBF;
 import lincks.maximilian.util.TF;
 import lincks.maximilian.util.Top;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -103,5 +105,16 @@ public interface Foldable<F extends Foldable<F, ?>, T> extends Top<F, T> {
      */
     default boolean any(Predicate<T> predicate) {
         return foldr((val, acc) -> acc || predicate.test(val),false);
+    }
+
+    default List<T> list() {
+        return foldr((val,acc) -> {
+            acc.add(val);
+            return acc;
+        }, new ArrayList<>());
+    }
+
+    default MList<T> mList() {
+        return foldr((val,acc) -> acc.append(val), new MList<>());
     }
 }

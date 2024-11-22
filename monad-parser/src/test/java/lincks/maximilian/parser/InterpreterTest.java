@@ -5,10 +5,7 @@ import lincks.maximilian.impl.monad.Either;
 import lincks.maximilian.impl.monad.MList;
 import lincks.maximilian.parser.custom.InfixOp;
 import lincks.maximilian.parser.custom.PrefixOp;
-import lincks.maximilian.parser.parser.ast.Context;
-import lincks.maximilian.parser.parser.ast.Literal;
-import lincks.maximilian.parser.parser.ast.SymbolLiteral;
-import lincks.maximilian.parser.parser.ast.ValueLiteral;
+import lincks.maximilian.parser.parser.ast.*;
 import lincks.maximilian.parser.token.OperatorToken;
 import lincks.maximilian.parser.token.Symbol;
 import org.junit.jupiter.api.Test;
@@ -367,5 +364,102 @@ class InterpreterTest {
                 """).asRight().value()));
     }
 
+    @Test
+    void customLangTest3() {
+        //REMOVE EQUIVALENCES AND IMPLICATIONS
 
+        //same as customLangTest but with global scope instead of local
+        Symbol negation = new Symbol("!");
+        Symbol implication = new Symbol("=>");
+        Symbol equivalence = new Symbol("<>");
+        Symbol union = new Symbol("||");
+        Symbol intersection = new Symbol("&&");
+
+        Lexer lexer = new Lexer(new MList<>(negation, implication, equivalence, union, intersection));
+
+        //custom Operations
+
+        PrefixOp<String> negate = new PrefixOp<>(negation, 1, 4);
+        InfixOp<String> equal = new InfixOp<>(equivalence, 3);
+        InfixOp<String> imply = new InfixOp<>(implication, 2);
+        InfixOp<String> unite = new InfixOp<>(union, 1);
+        InfixOp<String> intersect = new InfixOp<>(intersection, 0);
+
+        Map<Symbol, OperatorToken<String>> operators = Stream.of(negate, equal, imply, unite, intersect)
+                .collect(toMap(OperatorToken::getSymbol, Function.identity()));
+
+        Parser<String> parser = new Parser<>(lexer, operators);
+
+        Function<Literal<String>, String> fromLiteral = l -> {
+            switch (l) {
+                case SymbolLiteral<String> v -> {
+                    return v.getSymbol().symbol();
+                }
+                case ValueLiteral<String> v -> {
+                    return v.getValue();
+                }
+            }
+        };
+
+        Context<String> context = new Context<>(Map.of(
+                negation, l -> {
+                    //simplifies !!a to a
+                    String clause = fromLiteral.apply(l.head());
+                    if(clause.startsWith("!")) {
+                        return new ValueLiteral<>(clause.substring(1));
+                    } else {
+                        return new ValueLiteral<>("!" + clause);
+                    }
+                },
+                equivalence, l -> {
+                    //a <=> b -> (!a || b) && (!b || a)
+                    String x = fromLiteral.apply(l.head());
+                    String y = fromLiteral.apply(l.tail().head());
+
+                    String lit1;
+                    String lit2;
+
+                    if(x.startsWith("!")) {
+                        lit1 = "(%s || %s)".formatted(x.substring(1),y);
+                    } else {
+                        lit1 = "(!%s || %s)".formatted(x,y);
+                    }
+
+                    if(y.startsWith("!")) {
+                        lit2 = "(%s || %s)".formatted(y.substring(1),x);
+                    } else {
+                        lit2 = "(!%s || %s)".formatted(y,x);
+                    }
+
+                    return new ValueLiteral<>("(%s && %s)".formatted(lit1,lit2));
+                },
+                implication, l -> {
+                    //a => b -> (!a || b)
+                    String x = fromLiteral.apply(l.head());
+                    String y = fromLiteral.apply(l.tail().head());
+
+                    if(x.startsWith("!")) {
+                        return new ValueLiteral<>("(%s || %s)".formatted(x.substring(1),y));
+                    } else {
+                        return new ValueLiteral<>("(!%s || %s)".formatted(x,y));
+                    }
+                },
+                union, l -> {
+                    String x = fromLiteral.apply(l.head());
+                    String y = fromLiteral.apply(l.tail().head());
+
+                    return new ValueLiteral<>("(%s || %s)".formatted(x,y));
+                },
+                intersection, l -> {
+                    String x = fromLiteral.apply(l.head());
+                    String y = fromLiteral.apply(l.tail().head());
+
+                    return new ValueLiteral<>("(%s && %s)".formatted(x,y));
+                }
+        ));
+
+        Interpreter<String> interpreter = new Interpreter<>(parser, fromLiteral, context);
+
+        System.err.println(interpreter.run("(!x1 && !(x3 <> x2)) || ((x3 => !x4) && (x1 => (x2 || !x3)) && x4))"));
+    }
 }

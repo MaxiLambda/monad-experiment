@@ -102,4 +102,15 @@ public class MListTest {
         assertEquals(Maybe.nothing(), Maybe.unwrap(list1.filterM(pEmpty, Maybe.class)));
         assertEquals(new MList<>(2, 4), Maybe.unwrap(list1.filterM(p2)).get());
     }
+
+    @Test
+    void testWindows(){
+        var res = new MList<>(1,2,3,4,5,6).windows(4);
+        assertEquals(new MList<>(
+                new MList<>(1,2,3,4),
+                new MList<>(2,3,4,5),
+                new MList<>(3,4,5,6)
+        ),res);
+        assertEquals(new MList<>(), new MList<>(1,2).windows(3));
+    }
 }
