@@ -364,11 +364,9 @@ class InterpreterTest {
                 """).asRight().value()));
     }
 
-    @Test
-    void customLangTest3() {
+    class Interpreter3 {
         //REMOVE EQUIVALENCES AND IMPLICATIONS
 
-        //same as customLangTest but with global scope instead of local
         Symbol negation = new Symbol("!");
         Symbol implication = new Symbol("=>");
         Symbol equivalence = new Symbol("<>");
@@ -380,10 +378,10 @@ class InterpreterTest {
         //custom Operations
 
         PrefixOp<String> negate = new PrefixOp<>(negation, 1, 4);
-        InfixOp<String> equal = new InfixOp<>(equivalence, 3);
-        InfixOp<String> imply = new InfixOp<>(implication, 2);
-        InfixOp<String> unite = new InfixOp<>(union, 1);
-        InfixOp<String> intersect = new InfixOp<>(intersection, 0);
+        InfixOp<String> intersect = new InfixOp<>(intersection, 3);
+        InfixOp<String> unite = new InfixOp<>(union, 2);
+        InfixOp<String> imply = new InfixOp<>(implication, 1);
+        InfixOp<String> equal = new InfixOp<>(equivalence, 0);
 
         Map<Symbol, OperatorToken<String>> operators = Stream.of(negate, equal, imply, unite, intersect)
                 .collect(toMap(OperatorToken::getSymbol, Function.identity()));
@@ -405,7 +403,7 @@ class InterpreterTest {
                 negation, l -> {
                     //simplifies !!a to a
                     String clause = fromLiteral.apply(l.head());
-                    if(clause.startsWith("!")) {
+                    if (clause.startsWith("!")) {
                         return new ValueLiteral<>(clause.substring(1));
                     } else {
                         return new ValueLiteral<>("!" + clause);
@@ -419,47 +417,195 @@ class InterpreterTest {
                     String lit1;
                     String lit2;
 
-                    if(x.startsWith("!")) {
-                        lit1 = "(%s || %s)".formatted(x.substring(1),y);
+                    if (x.startsWith("!")) {
+                        lit1 = "(%s || %s)".formatted(x.substring(1), y);
                     } else {
-                        lit1 = "(!%s || %s)".formatted(x,y);
+                        lit1 = "(!%s || %s)".formatted(x, y);
                     }
 
-                    if(y.startsWith("!")) {
-                        lit2 = "(%s || %s)".formatted(y.substring(1),x);
+                    if (y.startsWith("!")) {
+                        lit2 = "(%s || %s)".formatted(y.substring(1), x);
                     } else {
-                        lit2 = "(!%s || %s)".formatted(y,x);
+                        lit2 = "(!%s || %s)".formatted(y, x);
                     }
 
-                    return new ValueLiteral<>("(%s && %s)".formatted(lit1,lit2));
+                    return new ValueLiteral<>("(%s && %s)".formatted(lit1, lit2));
                 },
                 implication, l -> {
                     //a => b -> (!a || b)
                     String x = fromLiteral.apply(l.head());
                     String y = fromLiteral.apply(l.tail().head());
 
-                    if(x.startsWith("!")) {
-                        return new ValueLiteral<>("(%s || %s)".formatted(x.substring(1),y));
+                    if (x.startsWith("!")) {
+                        return new ValueLiteral<>("(%s || %s)".formatted(x.substring(1), y));
                     } else {
-                        return new ValueLiteral<>("(!%s || %s)".formatted(x,y));
+                        return new ValueLiteral<>("(!%s || %s)".formatted(x, y));
                     }
                 },
                 union, l -> {
                     String x = fromLiteral.apply(l.head());
                     String y = fromLiteral.apply(l.tail().head());
 
-                    return new ValueLiteral<>("(%s || %s)".formatted(x,y));
+                    return new ValueLiteral<>("(%s || %s)".formatted(x, y));
                 },
                 intersection, l -> {
                     String x = fromLiteral.apply(l.head());
                     String y = fromLiteral.apply(l.tail().head());
 
-                    return new ValueLiteral<>("(%s && %s)".formatted(x,y));
+                    return new ValueLiteral<>("(%s && %s)".formatted(x, y));
                 }
         ));
 
         Interpreter<String> interpreter = new Interpreter<>(parser, fromLiteral, context);
+    }
 
-        System.err.println(interpreter.run("(!x1 && !(x3 <> x2)) || ((x3 => !x4) && (x1 => (x2 || !x3)) && x4))"));
+
+    class Interpreter4 {
+        //PROPAGATE NEGATION
+
+        Symbol negation = new Symbol("!");
+        Symbol union = new Symbol("||");
+        Symbol intersection = new Symbol("&&");
+
+        Lexer lexer = new Lexer(new MList<>(negation, union, intersection));
+
+        //custom Operations
+
+        PrefixOp<AstExpression<?>> negate = new PrefixOp<>(negation, 1, 2);
+        InfixOp<AstExpression<?>> intersect = new InfixOp<>(intersection, 1);
+        InfixOp<AstExpression<?>> unite = new InfixOp<>(union, 0);
+
+        Map<Symbol, OperatorToken<AstExpression<?>>> operators = Stream.of(negate, unite, intersect)
+                .collect(toMap(OperatorToken::getSymbol, Function.identity()));
+
+        Parser<AstExpression<?>> parser = new Parser<>(lexer, operators);
+
+        Function<Symbol, AstExpression<Symbol>> symbolToAst = ValueLiteral::new;
+
+        Function<Literal<AstExpression<?>>, AstExpression<?>> fromLiteral = l -> {
+            switch (l) {
+                case SymbolLiteral<AstExpression<?>> v -> {
+                    return v;
+                }
+                case ValueLiteral<AstExpression<?>> v -> {
+                    return v.getValue();
+                }
+            }
+        };
+
+        class Helper {
+            AstExpression<?> neg(AstExpression<?> expr) {
+                switch (expr) {
+                    case ValueLiteral<?> v -> {
+                        //negate the value by returning a negated expression - RECURSIVE
+                        return neg((AstExpression<?>) v.getValue());
+                    }
+                    case SymbolLiteral<?> v -> {
+                        //negate by returning new Expression with negation operator
+                        return new Expression<>(negation, new MList<>(v));
+                    }
+                    case Expression<?> v -> {
+                        if (v.getSymbol().equals(negation)) {
+                            //remove negation by just returning the first argument of the negation
+                            return v.getArgs().head();
+                        } else if (v.getSymbol().equals(union)) {
+                            //!(a || b) -> (!a && !b)
+                            return new Expression<>(intersection, v.getArgs().map(this::neg).map(e -> (AstExpression<AstExpression<?>>) e));
+                        } else if (v.getSymbol().equals(intersection)) {
+                            //!(a && b) -> (!a || !b)
+                            return new Expression<>(union, v.getArgs().map(this::neg).map(e -> (AstExpression<AstExpression<?>>) e));
+                        }
+                        throw new RuntimeException();
+                    }
+                }
+            }
+
+            ;
+        }
+
+        Context<AstExpression<?>> context = new Context<>(Map.of(
+                negation, l -> {
+                    AstExpression<?> clause = fromLiteral.apply(l.head());
+                    return new ValueLiteral<>(new Helper().neg(clause));
+                },
+                union, l -> {
+                    var params = l.map(fromLiteral).map(e -> (AstExpression<Object>) e);
+                    return new ValueLiteral<>(new Expression<>(union, params));
+                },
+                intersection, l -> {
+                    var params = l.map(fromLiteral).map(e -> (AstExpression<Object>) e);
+                    return new ValueLiteral<>(new Expression<>(intersection, params));
+                }
+        ));
+
+        Interpreter<AstExpression<?>> interpreter = new Interpreter<>(parser, fromLiteral, context);
+
+        String asString(AstExpression<?> expr) {
+         switch (expr) {
+                case ValueLiteral<?> v -> {
+                    //negate the value by returning a negated expression - RECURSIVE
+                    return asString((AstExpression<?>) v.getValue());
+                }
+                case SymbolLiteral<?> v -> {
+                    //negate by returning new Expression with negation operator
+                    return v.getSymbol().symbol();
+                }
+                case Expression<?> v -> {
+                    if (v.getSymbol().equals(negation)) {
+                        //remove negation by just returning the first argument of the negation
+                        return "!%s".formatted(v.getArgs().map(this::asString).head());
+                    } else if (v.getSymbol().equals(union)) {
+                        //!(a || b) -> (!a && !b)
+                        var args = v.getArgs().map(this::asString);
+                        return "(%s || %s)".formatted(args.head(), args.tail().head());
+                    } else if (v.getSymbol().equals(intersection)) {
+                        //!(a || b) -> (!a && !b)
+                        var args = v.getArgs().map(this::asString);
+                        return "%s && %s".formatted(args.head(), args.tail().head());
+                    }
+                    throw new RuntimeException();
+                }
+            }
+        }
+    }
+
+    @Test
+    void customLangTest3() {
+
+
+        var res = new Interpreter3().interpreter.run("(!x1 && !(x3 <> x2)) || ((x3 => !x4) && (x1 => (x2 || !x3)) && x4))");
+
+        System.err.println(res);
+
+    }
+
+    @Test
+    void customLangTest4() {
+        //PROPAGATE NEGATIONS
+
+        var i3 = new Interpreter3();
+        var i4 = new Interpreter4();
+
+        var res = i4.interpreter.run("((!x1 && !((!x3 || x2) && (!x2 || x3))) || (((!x3 || !x4) && (!x1 || (x2 || !x3))) && x4))");
+        System.err.println(i4.asString(res));
+    }
+
+    @Test
+    void customLangTest5(){
+        var i3 = new Interpreter3();
+        var i4 = new Interpreter4();
+        var i3res = i3.interpreter.run("(!x1 && !(x3 <> x2)) || ((x3 => !x4) && (x1 => (x2 || !x3)) && x4))");
+        var i4res = i4.interpreter.run(i3res);
+        var i4str = i4.asString(i4res);
+        var i3res2 = i3.interpreter.run(i4str);
+        System.err.println("### (!x1 && !(x3 <> x2)) || ((x3 => !x4) && (x1 => (x2 || !x3)) && x4))");
+        System.err.println("### " + i3res);
+        System.err.println("### " + i4str);
+        System.err.println("### " + i3res2);
+    }
+
+    @Test
+    void asasd(){
+        System.err.println(new Interpreter3().interpreter.run("a || b && c"));
     }
 }

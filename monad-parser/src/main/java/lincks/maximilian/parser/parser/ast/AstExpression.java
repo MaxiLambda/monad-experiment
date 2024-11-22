@@ -1,5 +1,5 @@
 package lincks.maximilian.parser.parser.ast;
 
-public interface AstExpression<T> {
+public sealed interface AstExpression<T> permits Expression, Literal {
     Literal<T> eval(Context<T> context);
 }

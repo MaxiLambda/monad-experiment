@@ -11,7 +11,7 @@ import lombok.ToString;
 @ToString
 @Getter
 @EqualsAndHashCode
-public class Expression<T> implements AstExpression<T> {
+public final class Expression<T> implements AstExpression<T> {
 
     private final Symbol symbol;
     private final MList<AstExpression<T>> args;

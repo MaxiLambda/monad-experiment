@@ -21,4 +21,9 @@ public class Interpreter<T> {
         return fromLiteral.apply(result);
     }
 
+    public T run(AstExpression<T> ast) {
+        Literal<T> result = ast.eval(context);
+        return fromLiteral.apply(result);
+    }
+
 }
