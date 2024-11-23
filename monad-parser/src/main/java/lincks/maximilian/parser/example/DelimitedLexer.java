@@ -1,8 +1,9 @@
-package lincks.maximilian.parser;
+package lincks.maximilian.parser.example;
 
 
 import lincks.maximilian.impl.monad.MList;
 import lincks.maximilian.impl.monad.MParser;
+import lincks.maximilian.parser.Lexer;
 import lincks.maximilian.parser.token.Symbol;
 import lombok.RequiredArgsConstructor;
 
@@ -11,8 +12,11 @@ import static lincks.maximilian.impl.monad.MList.toMList;
 import static lincks.maximilian.parser.token.SyntaxToken.L_BRACE;
 import static lincks.maximilian.parser.token.SyntaxToken.R_BRACE;
 
+/**
+ * Lexer, each Literal has to be delimited with ';'. This leads to efficient and fast lexing.
+ */
 @RequiredArgsConstructor
-public class DelimitedLexer {
+public class DelimitedLexer implements Lexer<String> {
     private final static MList<Symbol> braceSymbols = new MList<>(L_BRACE.getSymbol(), R_BRACE.getSymbol());
     private final MList<Symbol> operatorSymbols;
 

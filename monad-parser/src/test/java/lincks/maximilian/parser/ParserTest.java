@@ -3,6 +3,8 @@ package lincks.maximilian.parser;
 import lincks.maximilian.impl.monad.MList;
 import lincks.maximilian.parser.custom.InfixOp;
 import lincks.maximilian.parser.custom.PrefixOp;
+import lincks.maximilian.parser.example.LexerImpl;
+import lincks.maximilian.parser.example.ParserImpl;
 import lincks.maximilian.parser.parser.ast.Expression;
 import lincks.maximilian.parser.parser.ast.SymbolLiteral;
 import lincks.maximilian.parser.token.OperatorToken;
@@ -24,7 +26,7 @@ class ParserTest {
     Symbol symbol5 = new Symbol("+");
     Symbol symbol6 = new Symbol("*");
 
-    Lexer lexer = new Lexer(new MList<>(symbol1, symbol2, symbol3, symbol4, symbol5, symbol6));
+    LexerImpl lexer = new LexerImpl(new MList<>(symbol1, symbol2, symbol3, symbol4, symbol5, symbol6));
 
     //custom Operations
     PrefixOp<Integer> operator1 = new PrefixOp<>(symbol1, 1, 0);
@@ -36,11 +38,11 @@ class ParserTest {
 
     Map<Symbol, OperatorToken<Integer>> operators = Stream.of(operator1, operator2, operator3, operator4, operator5, operator6).collect(toMap(OperatorToken::getSymbol, Function.identity()));
 
-    Parser<Integer> parser = new Parser<>(lexer, operators);
+    ParserImpl<Integer> parser = new ParserImpl<>(operators);
 
     @Test
     void infixTest() {
-        var x = parser.run("1+2");
+        var x = parser.run(lexer,"1+2");
         assertEquals(new Expression<>(symbol5, new MList<>(
                 new SymbolLiteral<>(new Symbol("1")),
                 new SymbolLiteral<>(new Symbol("2")))), x);
@@ -48,12 +50,12 @@ class ParserTest {
 
     @Test
     void bracesTest() {
-        var x = parser.run("(!1)+2");
+        var x = parser.run(lexer,"(!1)+2");
         assertEquals(new Expression<>(symbol5, new MList<>(
                 new Expression<>(symbol1, new MList<>(new SymbolLiteral<>(new Symbol("1")))),
                 new SymbolLiteral<>(new Symbol("2")))), x);
 
-        var xx = parser.run("!1*2");
+        var xx = parser.run(lexer,"!1*2");
         assertEquals(new Expression<>(symbol1, new MList<>(
                 new Expression<>(symbol6, new MList<>(
                         new SymbolLiteral<>(new Symbol("1")),
@@ -63,15 +65,15 @@ class ParserTest {
 
     @Test
     void singleValueTest() {
-        var x = parser.run("1");
-        var xx = parser.run("(1)");
+        var x = parser.run(lexer,"1");
+        var xx = parser.run(lexer,"(1)");
         assertEquals(new SymbolLiteral<>(new Symbol("1")),x);
         assertEquals(new SymbolLiteral<>(new Symbol("1")),xx);
     }
 
     @Test
     void binaryPrefixTest() {
-        var x = parser.run("? 1 2");
+        var x = parser.run(lexer,"? 1 2");
         assertEquals(new Expression<>(symbol4, new MList<>(
                 new SymbolLiteral<>(new Symbol("1")),
                 new SymbolLiteral<>(new Symbol("2")))), x);
@@ -79,7 +81,7 @@ class ParserTest {
 
     @Test
     void complicatedTest() {
-        var x = parser.run("(!1)+2*(%3@4)");
+        var x = parser.run(lexer,"(!1)+2*(%3@4)");
         assertEquals(new Expression<>(symbol5, new MList<>(
                 new Expression<>(symbol1, new MList<>(new SymbolLiteral<>(new Symbol("1")))),
                 new Expression<>(symbol6, new MList<>(

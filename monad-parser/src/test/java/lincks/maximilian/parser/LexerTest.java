@@ -1,6 +1,7 @@
 package lincks.maximilian.parser;
 
 import lincks.maximilian.impl.monad.MList;
+import lincks.maximilian.parser.example.LexerImpl;
 import lincks.maximilian.parser.token.Symbol;
 import org.junit.jupiter.api.Test;
 
@@ -11,7 +12,7 @@ class LexerTest {
 
     @Test
     void run() {
-        Lexer lexer = new Lexer(new MList<>("*", "+", "->", "-").map(Symbol::new));
+        LexerImpl lexer = new LexerImpl(new MList<>("*", "+", "->", "-").map(Symbol::new));
 
         String input = "->)2(3*4-->4";
         var res = lexer.getSymbols(input);

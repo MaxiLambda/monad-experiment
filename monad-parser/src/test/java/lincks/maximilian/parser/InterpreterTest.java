@@ -5,6 +5,8 @@ import lincks.maximilian.impl.monad.Either;
 import lincks.maximilian.impl.monad.MList;
 import lincks.maximilian.parser.custom.InfixOp;
 import lincks.maximilian.parser.custom.PrefixOp;
+import lincks.maximilian.parser.example.LexerImpl;
+import lincks.maximilian.parser.example.ParserImpl;
 import lincks.maximilian.parser.parser.ast.*;
 import lincks.maximilian.parser.token.OperatorToken;
 import lincks.maximilian.parser.token.Symbol;
@@ -46,7 +48,7 @@ class InterpreterTest {
         Symbol plusS = new Symbol("+");
         Symbol starS = new Symbol("*");
 
-        Lexer lexer = new Lexer(new MList<>(exclamationS, atS, percentS, questionS, plusS, starS));
+        LexerImpl lexer = new LexerImpl(new MList<>(exclamationS, atS, percentS, questionS, plusS, starS));
 
         //custom Operations
         PrefixOp<Integer> operator1 = new PrefixOp<>(exclamationS, 1, 0);
@@ -58,7 +60,7 @@ class InterpreterTest {
 
         Map<Symbol, OperatorToken<Integer>> operators = Stream.of(operator1, operator2, operator3, operator4, operator5, operator6).collect(toMap(OperatorToken::getSymbol, Function.identity()));
 
-        Parser<Integer> parser = new Parser<>(lexer, operators);
+        ParserImpl<Integer> parser = new ParserImpl<>(operators);
 
         Function<Literal<Integer>, Integer> fromLiteral = l -> {
             switch (l) {
@@ -104,8 +106,8 @@ class InterpreterTest {
                     return new ValueLiteral<>(x * y);
                 }
         ));
-        Interpreter<Integer> interpreter = new Interpreter<>(parser, fromLiteral, context);
-        assertEquals(7, interpreter.run("(!1)+2*(%3@4)"));
+        Interpreter<Integer> interpreter = new Interpreter<>(fromLiteral, context);
+        assertEquals(7, interpreter.run(lexer,parser, "(!1)+2*(%3@4)"));
 
     }
 
@@ -113,14 +115,14 @@ class InterpreterTest {
     void minus() {
         Symbol minusS = new Symbol("-");
 
-        Lexer lexer = new Lexer(new MList<>(minusS));
+        LexerImpl lexer = new LexerImpl(new MList<>(minusS));
 
         //custom Operations
         InfixOp<Integer> operator5 = new InfixOp<>(minusS, 0);
 
         Map<Symbol, OperatorToken<Integer>> operators = Stream.of(operator5).collect(toMap(OperatorToken::getSymbol, Function.identity()));
 
-        Parser<Integer> parser = new Parser<>(lexer, operators);
+        ParserImpl<Integer> parser = new ParserImpl<>(operators);
 
         Function<Literal<Integer>, Integer> fromLiteral = l -> {
             switch (l) {
@@ -141,8 +143,8 @@ class InterpreterTest {
                     return new ValueLiteral<>(x - y);
                 }
         ));
-        Interpreter<Integer> interpreter = new Interpreter<>(parser, fromLiteral, context);
-        assertEquals(-1, interpreter.run("1-1-1"));
+        Interpreter<Integer> interpreter = new Interpreter<>(fromLiteral, context);
+        assertEquals(-1, interpreter.run(lexer,parser,"1-1-1"));
     }
 
 
@@ -157,7 +159,7 @@ class InterpreterTest {
         Symbol add = new Symbol("+");
         Symbol mul = new Symbol("*");
 
-        Lexer lexer = new Lexer(new MList<>(concat, storeVal, add, mul));
+        LexerImpl lexer = new LexerImpl(new MList<>(concat, storeVal, add, mul));
 
         //custom Operations
         InfixOp<Scope> operator1 = new InfixOp<>(concat, 2);
@@ -168,7 +170,7 @@ class InterpreterTest {
         Map<Symbol, OperatorToken<Scope>> operators = Stream.of(operator1, operator2, operator3, operator4)
                 .collect(toMap(OperatorToken::getSymbol, Function.identity()));
 
-        Parser<Scope> parser = new Parser<>(lexer, operators);
+        ParserImpl<Scope> parser = new ParserImpl<>(operators);
         Function<Literal<Scope>, Scope> fromLiteral = l -> {
             switch (l) {
                 case SymbolLiteral<Scope> v -> {
@@ -250,18 +252,18 @@ class InterpreterTest {
                     return new ValueLiteral<>(new Scope(newScope, new Either.Right<>(val1 * val2)));
                 }
         ));
-        Interpreter<Scope> interpreter = new Interpreter<>(parser, fromLiteral, context);
+        Interpreter<Scope> interpreter = new Interpreter<>(fromLiteral, context);
 
         //context is held locally, therefore "@a;1;,1;+a;*2;" won't work because it is evaluated as
         // "(((@a;1;),1;)+(a;*2));"
-        assertEquals(7, (interpreter.run("1+2*3").value().asRight().value()));
-        assertEquals(3, (interpreter.run("@a 1,@b 2,a+b").value().asRight().value()));
-        assertEquals(3, (interpreter.run("@a 1,@b 2,a+2").value().asRight().value()));
-        assertEquals(6, (interpreter.run("@a 2,@b 3,a*b").value().asRight().value()));
-        assertEquals(7, (interpreter.run("@a 2,@b 3,a*b+1").value().asRight().value()));
-        assertEquals(9, (interpreter.run("(@a 2,@b 3,1+a)*b").value().asRight().value()));
-        assertEquals(12, (interpreter.run("(@a(2+1),@b 3,1+a)*b").value().asRight().value()));
-        assertEquals(12, (interpreter.run("(1+@a(2+1),a)*@b 3,b").value().asRight().value()));
+        assertEquals(7, (interpreter.run(lexer,parser,"1+2*3").value().asRight().value()));
+        assertEquals(3, (interpreter.run(lexer,parser,"@a 1,@b 2,a+b").value().asRight().value()));
+        assertEquals(3, (interpreter.run(lexer,parser,"@a 1,@b 2,a+2").value().asRight().value()));
+        assertEquals(6, (interpreter.run(lexer,parser,"@a 2,@b 3,a*b").value().asRight().value()));
+        assertEquals(7, (interpreter.run(lexer,parser,"@a 2,@b 3,a*b+1").value().asRight().value()));
+        assertEquals(9, (interpreter.run(lexer,parser,"(@a 2,@b 3,1+a)*b").value().asRight().value()));
+        assertEquals(12, (interpreter.run(lexer,parser,"(@a(2+1),@b 3,1+a)*b").value().asRight().value()));
+        assertEquals(12, (interpreter.run(lexer,parser,"(1+@a(2+1),a)*@b 3,b").value().asRight().value()));
     }
 
     @Test
@@ -272,7 +274,7 @@ class InterpreterTest {
         Symbol add = new Symbol("+");
         Symbol mul = new Symbol("*");
 
-        Lexer lexer = new Lexer(new MList<>(concat, storeVal, add, mul));
+        LexerImpl lexer = new LexerImpl(new MList<>(concat, storeVal, add, mul));
 
         //custom Operations
         InfixOp<Either<Symbol, Integer>> operator1 = new InfixOp<>(concat, 2);
@@ -283,7 +285,7 @@ class InterpreterTest {
         Map<Symbol, OperatorToken<Either<Symbol, Integer>>> operators = Stream.of(operator1, operator2, operator3, operator4)
                 .collect(toMap(OperatorToken::getSymbol, Function.identity()));
 
-        Parser<Either<Symbol, Integer>> parser = new Parser<>(lexer, operators);
+        ParserImpl<Either<Symbol, Integer>> parser = new ParserImpl<>(operators);
         Function<Literal<Either<Symbol, Integer>>, Either<Symbol, Integer>> fromLiteral = l -> {
             switch (l) {
                 case SymbolLiteral<Either<Symbol, Integer>> v -> {
@@ -337,27 +339,27 @@ class InterpreterTest {
                     return new ValueLiteral<>(new Either.Right<>(resVal));
                 }
         ));
-        Interpreter<Either<Symbol, Integer>> interpreter = new Interpreter<>(parser, fromLiteral, context);
+        Interpreter<Either<Symbol, Integer>> interpreter = new Interpreter<>(fromLiteral, context);
 
         //all expressions form customLangTest hold
-        assertEquals(7, (interpreter.run("1 +2 *3 ").asRight().value()));
-        assertEquals(3, (interpreter.run("@a 1 ,@b 2 ,a +b ").asRight().value()));
-        assertEquals(3, (interpreter.run("@a 1 ,@b 2 ,a +2 ").asRight().value()));
-        assertEquals(6, (interpreter.run("@a 2 ,@b 3 ,a *b ").asRight().value()));
-        assertEquals(7, (interpreter.run("@a 2 ,@b 3 ,a *b +1 ").asRight().value()));
-        assertEquals(9, (interpreter.run("(@a 2 ,@b 3 ,1 +a )*b ").asRight().value()));
-        assertEquals(12, (interpreter.run("(@a (2 +1),@b 3 ,1 +a )*b ").asRight().value()));
-        assertEquals(12, (interpreter.run("(1 +@a (2 +1 ),a )*@b 3 ,b ").asRight().value()));
+        assertEquals(7, (interpreter.run(lexer,parser,"1 +2 *3 ").asRight().value()));
+        assertEquals(3, (interpreter.run(lexer,parser,"@a 1 ,@b 2 ,a +b ").asRight().value()));
+        assertEquals(3, (interpreter.run(lexer,parser,"@a 1 ,@b 2 ,a +2 ").asRight().value()));
+        assertEquals(6, (interpreter.run(lexer,parser,"@a 2 ,@b 3 ,a *b ").asRight().value()));
+        assertEquals(7, (interpreter.run(lexer,parser,"@a 2 ,@b 3 ,a *b +1 ").asRight().value()));
+        assertEquals(9, (interpreter.run(lexer,parser,"(@a 2 ,@b 3 ,1 +a )*b ").asRight().value()));
+        assertEquals(12, (interpreter.run(lexer,parser,"(@a (2 +1),@b 3 ,1 +a )*b ").asRight().value()));
+        assertEquals(12, (interpreter.run(lexer,parser,"(1 +@a (2 +1 ),a )*@b 3 ,b ").asRight().value()));
 
         //braces are no longer needed to propagate context correctly
-        assertEquals(9, (interpreter.run("""
+        assertEquals(9, (interpreter.run(lexer,parser,"""
                 @a 2,
                 @b 3,
                 (1+a)*b
                 """).asRight().value()));
 
         //test operator precedence
-        assertEquals(7, (interpreter.run("""
+        assertEquals(7, (interpreter.run(lexer,parser,"""
                 @a 2,
                 @b 3,
                 1+a*b
@@ -373,7 +375,7 @@ class InterpreterTest {
         Symbol union = new Symbol("||");
         Symbol intersection = new Symbol("&&");
 
-        Lexer lexer = new Lexer(new MList<>(negation, implication, equivalence, union, intersection));
+        LexerImpl lexer = new LexerImpl(new MList<>(negation, implication, equivalence, union, intersection));
 
         //custom Operations
 
@@ -386,7 +388,7 @@ class InterpreterTest {
         Map<Symbol, OperatorToken<String>> operators = Stream.of(negate, equal, imply, unite, intersect)
                 .collect(toMap(OperatorToken::getSymbol, Function.identity()));
 
-        Parser<String> parser = new Parser<>(lexer, operators);
+        ParserImpl<String> parser = new ParserImpl<>(operators);
 
         Function<Literal<String>, String> fromLiteral = l -> {
             switch (l) {
@@ -456,7 +458,7 @@ class InterpreterTest {
                 }
         ));
 
-        Interpreter<String> interpreter = new Interpreter<>(parser, fromLiteral, context);
+        Interpreter<String> interpreter = new Interpreter<>(fromLiteral, context);
     }
 
 
@@ -467,7 +469,7 @@ class InterpreterTest {
         Symbol union = new Symbol("||");
         Symbol intersection = new Symbol("&&");
 
-        Lexer lexer = new Lexer(new MList<>(negation, union, intersection));
+        LexerImpl lexer = new LexerImpl(new MList<>(negation, union, intersection));
 
         //custom Operations
 
@@ -478,7 +480,7 @@ class InterpreterTest {
         Map<Symbol, OperatorToken<AstExpression<?>>> operators = Stream.of(negate, unite, intersect)
                 .collect(toMap(OperatorToken::getSymbol, Function.identity()));
 
-        Parser<AstExpression<?>> parser = new Parser<>(lexer, operators);
+        ParserImpl<AstExpression<?>> parser = new ParserImpl<>(operators);
 
         Function<Symbol, AstExpression<Symbol>> symbolToAst = ValueLiteral::new;
 
@@ -538,7 +540,7 @@ class InterpreterTest {
                 }
         ));
 
-        Interpreter<AstExpression<?>> interpreter = new Interpreter<>(parser, fromLiteral, context);
+        Interpreter<AstExpression<?>> interpreter = new Interpreter<>(fromLiteral, context);
 
         String asString(AstExpression<?> expr) {
          switch (expr) {
@@ -578,7 +580,7 @@ class InterpreterTest {
         Symbol union = new Symbol("||");
         Symbol intersection = new Symbol("&&");
 
-        Lexer lexer = new Lexer(new MList<>(negation, implication, equivalence, union, intersection));
+        LexerImpl lexer = new LexerImpl(new MList<>(negation, implication, equivalence, union, intersection));
 
         //custom Operations
 
@@ -591,7 +593,7 @@ class InterpreterTest {
         Map<Symbol, OperatorToken<AstExpression<?>>> operators = Stream.of(negate, equal, imply, unite, intersect)
                 .collect(toMap(OperatorToken::getSymbol, Function.identity()));
 
-        Parser<AstExpression<?>> parser = new Parser<>(lexer, operators);
+        ParserImpl<AstExpression<?>> parser = new ParserImpl<>(operators);
 
         Function<Symbol, AstExpression<Symbol>> symbolToAst = ValueLiteral::new;
 
@@ -676,7 +678,7 @@ class InterpreterTest {
                 }
         ));
 
-        Interpreter<AstExpression<?>> interpreter = new Interpreter<>(parser, fromLiteral, context);
+        Interpreter<AstExpression<?>> interpreter = new Interpreter<>(fromLiteral, context);
 
         String asString(AstExpression<?> expr) {
          switch (expr) {
@@ -710,8 +712,9 @@ class InterpreterTest {
     @Test
     void customLangTest3() {
 
+        var i3 = new Interpreter3();
 
-        var res = new Interpreter3().interpreter.run("(!x1 && !(x3 <> x2)) || ((x3 => !x4) && (x1 => (x2 || !x3)) && x4))");
+        var res = i3.interpreter.run(i3.lexer,i3.parser,"(!x1 && !(x3 <> x2)) || ((x3 => !x4) && (x1 => (x2 || !x3)) && x4))");
 
         System.err.println(res);
 
@@ -721,10 +724,9 @@ class InterpreterTest {
     void customLangTest4() {
         //PROPAGATE NEGATIONS
 
-        var i3 = new Interpreter3();
         var i4 = new Interpreter4();
 
-        var res = i4.interpreter.run("((!x1 && !((!x3 || x2) && (!x2 || x3))) || (((!x3 || !x4) && (!x1 || (x2 || !x3))) && x4))");
+        var res = i4.interpreter.run(i4.lexer,i4.parser,"((!x1 && !((!x3 || x2) && (!x2 || x3))) || (((!x3 || !x4) && (!x1 || (x2 || !x3))) && x4))");
         System.err.println(i4.asString(res));
     }
 
@@ -733,11 +735,11 @@ class InterpreterTest {
         var i3 = new Interpreter3();
         var i4 = new Interpreter4();
         var i5 = new Interpreter5();
-        var i3res = i3.interpreter.run("(!x1 && !(x3 <> x2)) || ((x3 => !x4) && (x1 => (x2 || !x3)) && x4))");
-        var i4res = i4.interpreter.run(i3res);
+        var i3res = i3.interpreter.run(i3.lexer,i3.parser,"(!x1 && !(x3 <> x2)) || ((x3 => !x4) && (x1 => (x2 || !x3)) && x4))");
+        var i4res = i4.interpreter.run(i4.lexer,i4.parser,i3res);
         var i4str = i4.asString(i4res);
-        var i3res2 = i3.interpreter.run(i4str);
-        var ast5 = i5.interpreter.run("(!x1 && !(x3 <> x2)) || ((x3 => !x4) && (x1 => (x2 || !x3)) && x4))");
+        var i3res2 = i3.interpreter.run(i3.lexer, i3.parser, i4str);
+        var ast5 = i5.interpreter.run(i5.lexer,i5.parser,"(!x1 && !(x3 <> x2)) || ((x3 => !x4) && (x1 => (x2 || !x3)) && x4))");
         System.err.println("### (!x1 && !(x3 <> x2)) || ((x3 => !x4) && (x1 => (x2 || !x3)) && x4))");
         System.err.println("### " + i3res);
         System.err.println("### " + i4str);
@@ -748,7 +750,7 @@ class InterpreterTest {
     @Test
     void asasd(){
         var i5 = new Interpreter5();
-        var ast5 = i5.interpreter.run("(!x1 && !(x3 <> x2)) || ((x3 => !x4) && (x1 => (x2 || !x3)) && x4))");
+        var ast5 = i5.interpreter.run(i5.lexer,i5.parser,"(!x1 && !(x3 <> x2)) || ((x3 => !x4) && (x1 => (x2 || !x3)) && x4))");
         System.err.println(i5.asString(ast5));
     }
 }

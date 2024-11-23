@@ -3,6 +3,8 @@ package lincks.maximilian.parser;
 import lincks.maximilian.impl.monad.MList;
 import lincks.maximilian.parser.custom.InfixOp;
 import lincks.maximilian.parser.custom.PrefixOp;
+import lincks.maximilian.parser.example.LexerImpl;
+import lincks.maximilian.parser.example.ParserImpl;
 import lincks.maximilian.parser.parser.ast.Context;
 import lincks.maximilian.parser.parser.ast.Literal;
 import lincks.maximilian.parser.parser.ast.SymbolLiteral;
@@ -44,7 +46,7 @@ public class App {
         Symbol plusS = new Symbol("+");
         Symbol starS = new Symbol("*");
 
-        Lexer lexer = new Lexer(new MList<>(exclamationS, atS, percentS, questionS, plusS, starS));
+        LexerImpl lexer = new LexerImpl(new MList<>(exclamationS, atS, percentS, questionS, plusS, starS));
 
         //custom Operations
         PrefixOp<Integer> operator1 = new PrefixOp<>(exclamationS, 1, 0);
@@ -56,7 +58,7 @@ public class App {
 
         Map<Symbol, OperatorToken<Integer>> operators = Stream.of(operator1, operator2, operator3, operator4, operator5, operator6).collect(toMap(OperatorToken::getSymbol, Function.identity()));
 
-        Parser<Integer> parser = new Parser<>(lexer, operators);
+        ParserImpl<Integer> parser = new ParserImpl<>(operators);
 
         Function<Literal<Integer>, Integer> fromLiteral = l -> {
             switch (l) {
@@ -103,8 +105,8 @@ public class App {
                 }
         ));
 
-        Interpreter<Integer> interpreter = new Interpreter<>(parser, fromLiteral, context);
+        Interpreter<Integer> interpreter = new Interpreter<>(fromLiteral, context);
 
-        System.out.println(interpreter.run("(!1;)+2;*(%3;@4;)"));
+        System.out.println(interpreter.run(lexer,parser, "(!1;)+2;*(%3;@4;)"));
     }
 }
