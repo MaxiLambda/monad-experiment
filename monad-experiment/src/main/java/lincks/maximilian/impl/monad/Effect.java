@@ -59,7 +59,7 @@ public interface Effect<T> extends MonadZero<Effect<?>, T>, Alternative<Effect<?
     /**
      * Create a new Effect form a Supplier. This Effect fails if the Supplier throws.
      *
-     * @param supplier teh function to run as an Effect.
+     * @param supplier the function to run as an Effect.
      * @param <T>      the type of the value returned by this Effect.
      * @return a new Effect, which executes the Supplier and returns it's value.
      */

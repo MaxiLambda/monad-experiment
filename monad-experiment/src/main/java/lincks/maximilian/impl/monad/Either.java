@@ -31,6 +31,8 @@ public sealed interface Either<F, T> extends Monad<Either<F, ?>, T>, Alternative
         return effect.<Either<F,T>>map(Either.Right::new).getOnError(new Either.Left<>(failure));
     }
 
+    Either<T,F> swap();
+
     @Override
     default <R> Either<F, R> bind(Function<T, Monad<Either<F, ?>, R>> f) {
         return switch (this) {
@@ -84,6 +86,11 @@ public sealed interface Either<F, T> extends Monad<Either<F, ?>, T>, Alternative
         }
 
         @Override
+        public Either<T, F> swap() {
+            return new Left<>(value);
+        }
+
+        @Override
         public boolean isRight() {
             return true;
         }
@@ -103,6 +110,11 @@ public sealed interface Either<F, T> extends Monad<Either<F, ?>, T>, Alternative
         @Override
         public Left<F, T> asLeft() {
             return this;
+        }
+
+        @Override
+        public Either<T, F> swap() {
+            return new Right<>(value);
         }
 
         @Override
