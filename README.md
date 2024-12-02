@@ -7,6 +7,7 @@ It explores an implementation of monads in java. Inspiration was taken from hask
 **[monad-macro](monad-macro/README.md)** contains a clojure macro to port haskell's do-notation to clojure.
 
 **[monad-parser](monad-parser/README.md)** is an example project implementing a framework for a customizable scripting 
-language written with the monad implementations from monad-experiment. 
+language written with the monad implementations from monad-experiment. To show the abilities of this language, see
+https://github.com/MaxiLambda/cnf-calculator. This is a calculator to transform logical expressions to cnf.
 
 Additional Information to each project is in the README.md of the project.
