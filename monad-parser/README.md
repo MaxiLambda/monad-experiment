@@ -1,7 +1,3 @@
-## Informations about the topic
-* https://www.geeksforgeeks.org/construction-of-ll1-parsing-table/
-* https://www.usna.edu/Users/cs/wcbrown/courses/F20SI413/firstFollowPredict/ffp.html
-
 # Example Math-like Parser written with the monad-experiment Library
 
 This is a configurable parser used to parse math like languages.
